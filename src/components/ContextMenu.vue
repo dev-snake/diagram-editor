@@ -6,8 +6,52 @@
     :style="{ left: position.x + 'px', top: position.y + 'px' }"
     @click.stop
   >
+    <!-- Multiple groups selected - Super group operations -->
+    <template v-if="canCreateSuperGroup">
+      <div
+        class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
+        @click="handleCreateSuperGroup"
+      >
+        <svg
+          class="w-4 h-4 mr-2 text-orange-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+          />
+        </svg>
+        Tạo siêu nhóm
+      </div>
+      <hr class="my-1 border-gray-200" />
+    </template>
+
     <!-- Group operations -->
     <template v-if="selectedGroup">
+      <div
+        class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
+        @click="handleDuplicateGroup"
+      >
+        <svg
+          class="w-4 h-4 mr-2 text-blue-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+          />
+        </svg>
+        Sao chép nhóm
+      </div>
+      <hr class="my-1 border-gray-200" />
       <div
         class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
         @click="handleUngroup"
@@ -192,12 +236,16 @@ const props = defineProps<{
   position: Position
   selectedComponent: DroppedComponent | null
   selectedGroup?: ComponentGroup | null
+  selectedGroupIds?: number[]
   canGroup?: boolean
+  canCreateSuperGroup?: boolean
 }>()
 
 const emit = defineEmits<{
   delete: []
   duplicate: []
+  'duplicate-group': []
+  'create-super-group': []
   close: []
   'change-direction': [direction: 'left' | 'right']
   'create-group': []
@@ -219,6 +267,16 @@ const handleDelete = () => {
 
 const handleDuplicate = () => {
   emit('duplicate')
+  emit('close')
+}
+
+const handleDuplicateGroup = () => {
+  emit('duplicate-group')
+  emit('close')
+}
+
+const handleCreateSuperGroup = () => {
+  emit('create-super-group')
   emit('close')
 }
 

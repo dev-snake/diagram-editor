@@ -50,7 +50,7 @@
 
         <!-- Digital Display -->
         <div
-          class="absolute top-6 left-6 w-20 h-12 bg-black rounded border-2 border-gray-600 shadow-inner"
+          class="absolute top-6 left-6 w-20 h-18 bg-black rounded border-2 border-gray-600 shadow-inner"
         >
           <div class="p-1 text-green-400 font-mono text-xs leading-tight">
             <div>{{ props.valveId }}</div>

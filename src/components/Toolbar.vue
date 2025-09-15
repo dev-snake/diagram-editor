@@ -60,6 +60,41 @@
         </button>
       </div>
 
+      <!-- Save/Load controls -->
+      <div class="flex items-center space-x-1 mr-4">
+        <button
+          @click="$emit('save-config')"
+          class="px-3 py-1 text-sm bg-blue-50 border border-blue-300 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+          title="Lưu cấu hình hiện tại (Ctrl+S)"
+        >
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+            />
+          </svg>
+          Lưu
+        </button>
+
+        <button
+          @click="$emit('load-config')"
+          class="px-3 py-1 text-sm bg-green-50 border border-green-300 text-green-700 rounded hover:bg-green-100 transition-colors"
+          title="Tải cấu hình đã lưu (Ctrl+O)"
+        >
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3-3m3 3v8"
+            />
+          </svg>
+          Tải
+        </button>
+      </div>
+
       <!-- Selection info -->
       <div v-if="selectedInfo" class="text-sm text-gray-600 mr-4">
         {{ selectedInfo }}
@@ -123,5 +158,7 @@ defineEmits<{
   'create-group': []
   ungroup: []
   'select-all-and-group': []
+  'save-config': []
+  'load-config': []
 }>()
 </script>

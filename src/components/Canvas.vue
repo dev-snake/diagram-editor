@@ -151,9 +151,13 @@
       :position="contextMenu.position"
       :selectedComponent="contextMenu.component"
       :selectedGroup="selectedGroup"
+      :selectedGroupIds="selectedGroupIds"
       :canGroup="canGroupSelectedComponents"
+      :canCreateSuperGroup="canCreateSuperGroup"
       @delete="handleDeleteComponent"
       @duplicate="handleDuplicateComponent"
+      @duplicate-group="() => selectedGroup && duplicateGroup(selectedGroup)"
+      @create-super-group="createSuperGroup"
       @change-direction="handleChangeDirection"
       @create-group="createGroup"
       @ungroup="() => selectedGroup && ungroupComponents(selectedGroup)"
@@ -168,6 +172,7 @@ import { ref, computed, onMounted, onUnmounted, watch, readonly } from 'vue'
 import ComponentShape from './ComponentShape.vue'
 import ContextMenu from './ContextMenu.vue'
 import GroupContainer from './GroupContainer.vue'
+import { SaveLoadManager, type DiagramConfiguration } from '../utils/saveLoad'
 
 interface DroppedComponent {
   id: number
@@ -183,10 +188,12 @@ interface DroppedComponent {
 interface ComponentGroup {
   id: number
   components: number[] // Array of component IDs
+  groups?: number[] // Array of nested group IDs (for group nesting)
   x: number
   y: number
   width: number
   height: number
+  parentGroupId?: number | null // ID of parent group if this is nested
 }
 
 const emit = defineEmits<{
@@ -216,6 +223,7 @@ const groups = ref<ComponentGroup[]>([])
 const selectedComponents = ref<DroppedComponent[]>([])
 const selectedComponent = ref<DroppedComponent | null>(null)
 const selectedGroup = ref<ComponentGroup | null>(null)
+const selectedGroupIds = ref<number[]>([]) // For multiple group selection
 const isDraggingComponent = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
 
@@ -313,6 +321,7 @@ const handleMouseDown = (event: MouseEvent) => {
         selectedComponents.value = []
         selectedComponent.value = null
         selectedGroup.value = null
+        selectedGroupIds.value = []
 
         // Start selection box
         isMultiSelecting.value = true
@@ -553,10 +562,12 @@ const createGroup = () => {
   const newGroup: ComponentGroup = {
     id: groupId,
     components: selectedComponents.value.map((c) => c.id),
+    groups: [], // Initialize empty array for nested groups
     x: minX,
     y: minY,
     width: maxX - minX,
     height: maxY - minY,
+    parentGroupId: null, // Initialize as null
   }
 
   // Mark components as grouped
@@ -573,24 +584,43 @@ const createGroup = () => {
 }
 
 const ungroupComponents = (group: ComponentGroup) => {
-  // Remove group ID from components
-  group.components.forEach((componentId) => {
-    const component = components.value.find((c) => c.id === componentId)
-    if (component) {
-      component.groupId = null
+  // Check if it's a super group (contains other groups)
+  if (group.groups && group.groups.length > 0) {
+    // Handle super group ungrouping
+    ungroupSuperGroup(group)
+  } else {
+    // Handle regular group ungrouping
+    // Remove group ID from components
+    group.components.forEach((componentId) => {
+      const component = components.value.find((c) => c.id === componentId)
+      if (component) {
+        component.groupId = null
+      }
+    })
+
+    // Remove group
+    const groupIndex = groups.value.findIndex((g) => g.id === group.id)
+    if (groupIndex >= 0) {
+      groups.value.splice(groupIndex, 1)
     }
-  })
 
-  // Remove group
-  const groupIndex = groups.value.findIndex((g) => g.id === group.id)
-  if (groupIndex >= 0) {
-    groups.value.splice(groupIndex, 1)
+    selectedGroup.value = null
+    selectedGroupIds.value = []
   }
-
-  selectedGroup.value = null
 }
 
 const deleteGroup = (group: ComponentGroup) => {
+  // Check if it's a super group
+  if (group.groups && group.groups.length > 0) {
+    // Delete all nested groups first
+    group.groups.forEach((nestedGroupId) => {
+      const nestedGroup = groups.value.find((g) => g.id === nestedGroupId)
+      if (nestedGroup) {
+        deleteGroup(nestedGroup) // Recursively delete nested groups
+      }
+    })
+  }
+
   // Delete all components in the group
   group.components.forEach((componentId) => {
     const componentIndex = components.value.findIndex((c) => c.id === componentId)
@@ -603,9 +633,282 @@ const deleteGroup = (group: ComponentGroup) => {
   ungroupComponents(group)
 }
 
+const duplicateGroup = (group: ComponentGroup) => {
+  // Check if it's a super group (contains nested groups)
+  if (group.groups && group.groups.length > 0) {
+    // Handle super group duplication
+    duplicateSuperGroup(group)
+  } else {
+    // Handle regular group duplication
+    duplicateRegularGroup(group)
+  }
+}
+
+const duplicateRegularGroup = (group: ComponentGroup) => {
+  // Generate new IDs
+  const newGroupId = Date.now() + Math.random()
+  const componentIdMap = new Map<number, number>()
+
+  // Create mapping of old IDs to new IDs
+  group.components.forEach((oldId) => {
+    const newId = Date.now() + Math.random() + oldId
+    componentIdMap.set(oldId, newId)
+  })
+
+  // Calculate offset position (20px to the right and down)
+  const offsetX = 20
+  const offsetY = 20
+
+  // Duplicate all components in the group
+  const duplicatedComponents: DroppedComponent[] = []
+  group.components.forEach((componentId) => {
+    const originalComponent = components.value.find((c) => c.id === componentId)
+    if (originalComponent) {
+      const newId = componentIdMap.get(componentId)!
+      const duplicatedComponent: DroppedComponent = {
+        id: newId,
+        type: originalComponent.type,
+        x: originalComponent.x + offsetX,
+        y: originalComponent.y + offsetY,
+        width: originalComponent.width,
+        height: originalComponent.height,
+        direction: originalComponent.direction,
+        groupId: newGroupId,
+      }
+
+      // Snap to grid
+      duplicatedComponent.x = Math.round(duplicatedComponent.x / gridSize) * gridSize
+      duplicatedComponent.y = Math.round(duplicatedComponent.y / gridSize) * gridSize
+
+      duplicatedComponents.push(duplicatedComponent)
+      components.value.push(duplicatedComponent)
+    }
+  })
+
+  // Create new group
+  const newGroup: ComponentGroup = {
+    id: newGroupId,
+    components: Array.from(componentIdMap.values()),
+    groups: [],
+    x: group.x + offsetX,
+    y: group.y + offsetY,
+    width: group.width,
+    height: group.height,
+    parentGroupId: group.parentGroupId,
+  }
+
+  // Snap group position to grid
+  newGroup.x = Math.round(newGroup.x / gridSize) * gridSize
+  newGroup.y = Math.round(newGroup.y / gridSize) * gridSize
+
+  groups.value.push(newGroup)
+
+  // Select the duplicated group
+  selectedGroup.value = newGroup
+  selectedComponents.value = duplicatedComponents
+  selectedComponent.value = duplicatedComponents[0] || null
+}
+
+const duplicateSuperGroup = (superGroup: ComponentGroup) => {
+  // Calculate offset
+  const offsetX = 20
+  const offsetY = 20
+
+  // Map to store old group ID -> new group ID mapping
+  const groupIdMap = new Map<number, number>()
+  const newSuperGroupId = Date.now() + Math.random()
+  groupIdMap.set(superGroup.id, newSuperGroupId)
+
+  // Create mapping for all nested groups first
+  if (superGroup.groups) {
+    superGroup.groups.forEach((nestedGroupId) => {
+      const newNestedGroupId = Date.now() + Math.random() + nestedGroupId
+      groupIdMap.set(nestedGroupId, newNestedGroupId)
+    })
+  }
+
+  // Duplicate all nested groups
+  const duplicatedNestedGroupIds: number[] = []
+  if (superGroup.groups) {
+    superGroup.groups.forEach((nestedGroupId) => {
+      const originalNestedGroup = groups.value.find((g) => g.id === nestedGroupId)
+      if (originalNestedGroup) {
+        const newNestedGroupId = groupIdMap.get(nestedGroupId)!
+
+        // Duplicate the nested group's components
+        const componentIdMap = new Map<number, number>()
+        originalNestedGroup.components.forEach((oldId) => {
+          const newId = Date.now() + Math.random() + oldId
+          componentIdMap.set(oldId, newId)
+        })
+
+        // Duplicate components
+        originalNestedGroup.components.forEach((componentId) => {
+          const originalComponent = components.value.find((c) => c.id === componentId)
+          if (originalComponent) {
+            const newComponentId = componentIdMap.get(componentId)!
+            const duplicatedComponent: DroppedComponent = {
+              id: newComponentId,
+              type: originalComponent.type,
+              x: originalComponent.x + offsetX,
+              y: originalComponent.y + offsetY,
+              width: originalComponent.width,
+              height: originalComponent.height,
+              direction: originalComponent.direction,
+              groupId: newNestedGroupId,
+            }
+
+            // Snap to grid
+            duplicatedComponent.x = Math.round(duplicatedComponent.x / gridSize) * gridSize
+            duplicatedComponent.y = Math.round(duplicatedComponent.y / gridSize) * gridSize
+
+            components.value.push(duplicatedComponent)
+          }
+        })
+
+        // Create duplicated nested group
+        const duplicatedNestedGroup: ComponentGroup = {
+          id: newNestedGroupId,
+          components: Array.from(componentIdMap.values()),
+          groups: [],
+          x: originalNestedGroup.x + offsetX,
+          y: originalNestedGroup.y + offsetY,
+          width: originalNestedGroup.width,
+          height: originalNestedGroup.height,
+          parentGroupId: newSuperGroupId,
+        }
+
+        // Snap group position to grid
+        duplicatedNestedGroup.x = Math.round(duplicatedNestedGroup.x / gridSize) * gridSize
+        duplicatedNestedGroup.y = Math.round(duplicatedNestedGroup.y / gridSize) * gridSize
+
+        groups.value.push(duplicatedNestedGroup)
+        duplicatedNestedGroupIds.push(newNestedGroupId)
+      }
+    })
+  }
+
+  // Create new super group
+  const newSuperGroup: ComponentGroup = {
+    id: newSuperGroupId,
+    components: [], // Super group doesn't directly contain components
+    groups: duplicatedNestedGroupIds,
+    x: superGroup.x + offsetX,
+    y: superGroup.y + offsetY,
+    width: superGroup.width,
+    height: superGroup.height,
+    parentGroupId: null,
+  }
+
+  // Snap super group position to grid
+  newSuperGroup.x = Math.round(newSuperGroup.x / gridSize) * gridSize
+  newSuperGroup.y = Math.round(newSuperGroup.y / gridSize) * gridSize
+
+  groups.value.push(newSuperGroup)
+
+  // Select the duplicated super group
+  selectedGroup.value = newSuperGroup
+  selectedGroupIds.value = [newSuperGroupId]
+  selectedComponents.value = []
+  selectedComponent.value = null
+}
+
+const createSuperGroup = () => {
+  // Get all selected groups (when multiple groups are selected)
+  const selectedGroups = groups.value.filter((group) => selectedGroupIds.value.includes(group.id))
+
+  if (selectedGroups.length < 2) return
+
+  const superGroupId = Date.now() + Math.random()
+
+  // Calculate bounds that encompass all selected groups
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity
+
+  selectedGroups.forEach((group) => {
+    minX = Math.min(minX, group.x)
+    minY = Math.min(minY, group.y)
+    maxX = Math.max(maxX, group.x + group.width)
+    maxY = Math.max(maxY, group.y + group.height)
+  })
+
+  // Create super group
+  const superGroup: ComponentGroup = {
+    id: superGroupId,
+    components: [], // Super group doesn't directly contain components
+    groups: selectedGroups.map((g) => g.id), // Contains other groups
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+    parentGroupId: null,
+  }
+
+  // Mark selected groups as nested in super group
+  selectedGroups.forEach((group) => {
+    group.parentGroupId = superGroupId
+  })
+
+  groups.value.push(superGroup)
+
+  // Select the newly created super group
+  selectedGroup.value = superGroup
+  selectedGroupIds.value = [superGroupId]
+  selectedComponents.value = []
+  selectedComponent.value = null
+}
+
+const ungroupSuperGroup = (superGroup: ComponentGroup) => {
+  if (!superGroup.groups || superGroup.groups.length === 0) return
+
+  // Remove parent reference from nested groups
+  superGroup.groups.forEach((groupId) => {
+    const nestedGroup = groups.value.find((g) => g.id === groupId)
+    if (nestedGroup) {
+      nestedGroup.parentGroupId = null
+    }
+  })
+
+  // Remove super group
+  const superGroupIndex = groups.value.findIndex((g) => g.id === superGroup.id)
+  if (superGroupIndex >= 0) {
+    groups.value.splice(superGroupIndex, 1)
+  }
+
+  selectedGroup.value = null
+}
+
 // Get components that belong to a group
 const getGroupComponents = (groupId: number): DroppedComponent[] => {
   return components.value.filter((c) => c.groupId === groupId)
+}
+
+// Helper function to move a group and all its nested content recursively
+const moveGroupRecursive = (group: ComponentGroup, deltaX: number, deltaY: number) => {
+  // Move the group itself
+  group.x += deltaX
+  group.y += deltaY
+
+  // Move all components in the group
+  group.components.forEach((componentId) => {
+    const component = components.value.find((c) => c.id === componentId)
+    if (component) {
+      component.x += deltaX
+      component.y += deltaY
+    }
+  })
+
+  // Recursively move all nested groups
+  if (group.groups && group.groups.length > 0) {
+    group.groups.forEach((nestedGroupId) => {
+      const nestedGroup = groups.value.find((g) => g.id === nestedGroupId)
+      if (nestedGroup) {
+        moveGroupRecursive(nestedGroup, deltaX, deltaY)
+      }
+    })
+  }
 }
 
 // Update group bounds based on its components
@@ -633,6 +936,10 @@ const updateGroupBounds = (group: ComponentGroup) => {
 }
 const canGroupSelectedComponents = computed(() => {
   return selectedComponents.value.length >= 2 && selectedComponents.value.every((c) => !c.groupId)
+})
+
+const canCreateSuperGroup = computed(() => {
+  return selectedGroupIds.value.length >= 2
 })
 
 const startDragComponent = (event: MouseEvent, component: DroppedComponent) => {
@@ -808,6 +1115,7 @@ onMounted(() => {
       selectedComponent.value = null
       selectedComponents.value = []
       selectedGroup.value = null
+      selectedGroupIds.value = []
     }
   }
 
@@ -861,18 +1169,8 @@ const handleGroupMouseDown = (event: MouseEvent, group: ComponentGroup) => {
         const actualDeltaX = newGroupX - selectedGroup.value.x
         const actualDeltaY = newGroupY - selectedGroup.value.y
 
-        // Move group
-        selectedGroup.value.x = newGroupX
-        selectedGroup.value.y = newGroupY
-
-        // Move all components in the group by the same delta
-        selectedGroup.value.components.forEach((componentId) => {
-          const component = components.value.find((c) => c.id === componentId)
-          if (component) {
-            component.x += actualDeltaX
-            component.y += actualDeltaY
-          }
-        })
+        // Use the helper function to move group and all nested content
+        moveGroupRecursive(selectedGroup.value, actualDeltaX, actualDeltaY)
       }
     }
 
@@ -888,7 +1186,27 @@ const handleGroupMouseDown = (event: MouseEvent, group: ComponentGroup) => {
 
 const handleGroupClick = (event: MouseEvent, group: ComponentGroup) => {
   event.stopPropagation()
-  selectedGroup.value = group
+
+  if (event.ctrlKey || event.metaKey) {
+    // Multi-select mode for groups
+    const index = selectedGroupIds.value.findIndex((id) => id === group.id)
+    if (index >= 0) {
+      // Remove from selection
+      selectedGroupIds.value.splice(index, 1)
+    } else {
+      // Add to selection
+      selectedGroupIds.value.push(group.id)
+    }
+    selectedGroup.value =
+      selectedGroupIds.value.length === 1
+        ? groups.value.find((g) => g.id === selectedGroupIds.value[0]) || null
+        : null
+  } else {
+    // Single select mode
+    selectedGroup.value = group
+    selectedGroupIds.value = [group.id]
+  }
+
   selectedComponent.value = null
   selectedComponents.value = []
 }
@@ -1009,6 +1327,7 @@ const clearCanvas = () => {
   selectedComponent.value = null
   selectedComponents.value = []
   selectedGroup.value = null
+  selectedGroupIds.value = []
 }
 
 // Select all components
@@ -1081,17 +1400,111 @@ const handleKeyUp = (event: KeyboardEvent) => {
   }
 }
 
+// Save/Load functionality
+const saveConfiguration = (name: string, description?: string): boolean => {
+  try {
+    const canvasState = {
+      scale: scale.value,
+      panX: panX.value,
+      panY: panY.value,
+    }
+
+    return SaveLoadManager.saveConfiguration(
+      name,
+      components.value,
+      groups.value,
+      canvasState,
+      description,
+    )
+  } catch (error) {
+    console.error('Failed to save configuration:', error)
+    return false
+  }
+}
+
+const loadConfiguration = (config: DiagramConfiguration): boolean => {
+  try {
+    // Clear current state
+    clearCanvas()
+
+    // Restore canvas state
+    scale.value = config.canvas.scale
+    panX.value = config.canvas.panX
+    panY.value = config.canvas.panY
+
+    // Restore components
+    components.value = [...config.components]
+
+    // Restore groups
+    groups.value = [...config.groups]
+
+    // Emit scale change
+    emit('scale-change', scale.value)
+
+    // Clear selections
+    selectedComponent.value = null
+    selectedComponents.value = []
+    selectedGroup.value = null
+
+    return true
+  } catch (error) {
+    console.error('Failed to load configuration:', error)
+    return false
+  }
+}
+
+const exportConfiguration = (name: string, description?: string): void => {
+  const canvasState = {
+    scale: scale.value,
+    panX: panX.value,
+    panY: panY.value,
+  }
+
+  const config: DiagramConfiguration = {
+    name,
+    description,
+    timestamp: Date.now(),
+    version: '1.0.0',
+    canvas: canvasState,
+    components: [...components.value],
+    groups: [...groups.value],
+  }
+
+  SaveLoadManager.exportConfiguration(config)
+}
+
+const importConfiguration = async (file: File): Promise<boolean> => {
+  try {
+    const config = await SaveLoadManager.importConfiguration(file)
+    if (config) {
+      return loadConfiguration(config)
+    }
+    return false
+  } catch (error) {
+    console.error('Failed to import configuration:', error)
+    return false
+  }
+}
+
 defineExpose({
   zoomIn,
   zoomOut,
   resetZoom,
   clearCanvas,
   createGroup,
+  createSuperGroup,
+  duplicateGroup: () => selectedGroup.value && duplicateGroup(selectedGroup.value),
   selectAllComponents,
   ungroupComponents: () => selectedGroup.value && ungroupComponents(selectedGroup.value),
   canGroupSelectedComponents,
+  canCreateSuperGroup,
   selectedComponents: readonly(selectedComponents),
   selectedGroup: readonly(selectedGroup),
+  selectedGroupIds: readonly(selectedGroupIds),
+  saveConfiguration,
+  loadConfiguration,
+  exportConfiguration,
+  importConfiguration,
 })
 </script>
 

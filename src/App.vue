@@ -18,6 +18,8 @@
         @create-group="handleCreateGroup"
         @ungroup="handleUngroup"
         @select-all-and-group="handleSelectAllAndGroup"
+        @save-config="handleSaveConfig"
+        @load-config="handleLoadConfig"
       />
 
       <!-- :selectedInfo="getSelectionInfo()"  -->
@@ -26,6 +28,16 @@
         <Canvas ref="canvasRef" @scale-change="handleScaleChange" />
       </div>
     </div>
+
+    <!-- Save/Load Modal -->
+    <SaveLoadModal
+      :isVisible="modalState.isVisible"
+      :mode="modalState.mode"
+      @close="handleModalClose"
+      @save="handleModalSave"
+      @load="handleModalLoad"
+      @import="handleModalImport"
+    />
   </div>
 </template>
 
@@ -34,9 +46,17 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import Canvas from './components/Canvas.vue'
 import Toolbar from './components/Toolbar.vue'
+import SaveLoadModal from './components/SaveLoadModal.vue'
+import type { DiagramConfiguration } from './utils/saveLoad'
 
 const canvasRef = ref()
 const canvasScale = ref(1)
+
+// Modal state
+const modalState = ref({
+  isVisible: false,
+  mode: 'save' as 'save' | 'load',
+})
 
 // Computed property to check if there are components that can be grouped
 const hasComponentsToGroup = computed(() => {
@@ -57,14 +77,6 @@ const preventContextMenu = (e: MouseEvent) => {
     e.preventDefault()
   }
 }
-
-onMounted(() => {
-  document.addEventListener('contextmenu', preventContextMenu)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('contextmenu', preventContextMenu)
-})
 
 const handleScaleChange = (scale: number) => {
   canvasScale.value = scale
@@ -127,5 +139,78 @@ const getSelectionInfo = () => {
   }
 
   return ''
+}
+
+// Save/Load handlers
+const handleSaveConfig = () => {
+  modalState.value = { isVisible: true, mode: 'save' }
+}
+
+const handleLoadConfig = () => {
+  modalState.value = { isVisible: true, mode: 'load' }
+}
+
+const handleModalClose = () => {
+  modalState.value.isVisible = false
+}
+
+const handleModalSave = (name: string, description?: string) => {
+  if (canvasRef.value) {
+    const success = canvasRef.value.saveConfiguration(name, description)
+    if (success) {
+      alert(`Cấu hình "${name}" đã được lưu thành công!`)
+      handleModalClose()
+    } else {
+      alert('Lỗi khi lưu cấu hình. Vui lòng thử lại.')
+    }
+  }
+}
+
+const handleModalLoad = (config: DiagramConfiguration) => {
+  if (canvasRef.value) {
+    const success = canvasRef.value.loadConfiguration(config)
+    if (success) {
+      alert(`Cấu hình "${config.name}" đã được tải thành công!`)
+      handleModalClose()
+    } else {
+      alert('Lỗi khi tải cấu hình. Vui lòng thử lại.')
+    }
+  }
+}
+
+const handleModalImport = async (file: File) => {
+  if (canvasRef.value) {
+    const success = await canvasRef.value.importConfiguration(file)
+    if (success) {
+      alert(`File "${file.name}" đã được import thành công!`)
+      handleModalClose()
+    } else {
+      alert('Lỗi khi import file. Vui lòng kiểm tra định dạng file.')
+    }
+  }
+}
+
+// Keyboard shortcuts
+onMounted(() => {
+  document.addEventListener('contextmenu', preventContextMenu)
+  document.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('contextmenu', preventContextMenu)
+  document.removeEventListener('keydown', handleGlobalKeydown)
+})
+
+const handleGlobalKeydown = (e: KeyboardEvent) => {
+  // Save shortcut (Ctrl+S)
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault()
+    handleSaveConfig()
+  }
+  // Load shortcut (Ctrl+O)
+  else if (e.ctrlKey && e.key === 'o') {
+    e.preventDefault()
+    handleLoadConfig()
+  }
 }
 </script>

@@ -14,17 +14,27 @@
     <div
       class="absolute inset-0 border-2 border-dashed rounded-lg pointer-events-none transition-colors"
       :class="{
-        'border-purple-400': !selected,
-        'border-purple-600': selected,
+        'border-purple-400': !selected && !isNestedGroup && !isSuperGroup,
+        'border-purple-600': selected && !isNestedGroup && !isSuperGroup,
+        'border-blue-400': !selected && isNestedGroup,
+        'border-blue-600': selected && isNestedGroup,
+        'border-orange-400': !selected && isSuperGroup,
+        'border-orange-600': selected && isSuperGroup,
       }"
     ></div>
 
     <!-- Group label -->
     <div
-      class="absolute -top-6 left-0 bg-purple-500 text-white text-xs px-2 py-1 rounded-sm font-medium pointer-events-none"
+      class="absolute -top-6 left-0 text-white text-xs px-2 py-1 rounded-sm font-medium pointer-events-none"
+      :class="{
+        'bg-purple-500': !isNestedGroup && !isSuperGroup,
+        'bg-blue-500': isNestedGroup,
+        'bg-orange-500': isSuperGroup,
+      }"
       style="font-size: 10px"
     >
-      Group ({{ groupComponents.length }} items)
+      {{ isSuperGroup ? 'Super Group' : isNestedGroup ? 'Nested Group' : 'Group' }}
+      ({{ totalItemsCount }} items)
     </div>
 
     <!-- Group selection area for clicking (invisible overlay) -->
@@ -43,10 +53,12 @@ import { computed } from 'vue'
 interface ComponentGroup {
   id: number
   components: number[]
+  groups?: number[] // Array of nested group IDs
   x: number
   y: number
   width: number
   height: number
+  parentGroupId?: number | null
 }
 
 interface DroppedComponent {
@@ -76,6 +88,23 @@ const emit = defineEmits<{
 
 const groupComponents = computed(() => {
   return props.components.filter((c: DroppedComponent) => props.group.components.includes(c.id))
+})
+
+const totalItemsCount = computed(() => {
+  let count = groupComponents.value.length
+  // Add nested groups count if any
+  if (props.group.groups && props.group.groups.length > 0) {
+    count += props.group.groups.length
+  }
+  return count
+})
+
+const isNestedGroup = computed(() => {
+  return props.group.parentGroupId !== null && props.group.parentGroupId !== undefined
+})
+
+const isSuperGroup = computed(() => {
+  return props.group.groups && props.group.groups.length > 0
 })
 
 const handleGroupMouseDown = (event: MouseEvent) => {
