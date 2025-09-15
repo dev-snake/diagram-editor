@@ -17,7 +17,7 @@
         <div
           class="absolute top-5 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded font-mono"
         >
-          LEVEL-01
+          {{ props.sensorId }}
         </div>
 
         <!-- Water Level Display Window -->
@@ -27,7 +27,7 @@
           <!-- Water -->
           <div
             class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-600 to-blue-400 transition-all duration-1000 ease-out"
-            :style="{ height: waterLevel + '%' }"
+            :style="{ height: internalWaterLevel + '%' }"
           >
             <!-- Water Surface Animation -->
             <div
@@ -71,19 +71,23 @@
         <div
           class="absolute bottom-16 left-2 right-2 h-8 bg-black rounded border border-gray-600 flex items-center justify-center"
         >
-          <span class="text-green-400 font-mono text-sm">{{ waterLevel.toFixed(1) }}%</span>
+          <span class="text-green-400 font-mono text-sm"
+            >{{ internalWaterLevel.toFixed(1) }}{{ props.unit }}</span
+          >
         </div>
 
         <!-- Status LEDs -->
         <div class="absolute bottom-8 left-4 flex space-x-2">
           <div
             class="w-2 h-2 rounded-full"
-            :class="waterLevel > 80 ? 'bg-red-500 shadow-red-500/50 shadow-lg' : 'bg-gray-600'"
+            :class="
+              alertStatus === 'high' ? 'bg-red-500 shadow-red-500/50 shadow-lg' : 'bg-gray-600'
+            "
           ></div>
           <div
             class="w-2 h-2 rounded-full"
             :class="
-              waterLevel > 20 && waterLevel <= 80
+              alertStatus === 'normal'
                 ? 'bg-green-500 shadow-green-500/50 shadow-lg'
                 : 'bg-gray-600'
             "
@@ -91,7 +95,7 @@
           <div
             class="w-2 h-2 rounded-full"
             :class="
-              waterLevel <= 20 ? 'bg-yellow-500 shadow-yellow-500/50 shadow-lg' : 'bg-gray-600'
+              alertStatus === 'low' ? 'bg-yellow-500 shadow-yellow-500/50 shadow-lg' : 'bg-gray-600'
             "
           ></div>
         </div>
@@ -99,7 +103,11 @@
         <!-- Control Knob -->
         <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2">
           <div
-            class="relative w-8 h-8 bg-gradient-to-b from-gray-300 to-gray-600 rounded-full border-2 border-gray-700 cursor-pointer"
+            class="relative w-8 h-8 bg-gradient-to-b from-gray-300 to-gray-600 rounded-full border-2 border-gray-700"
+            :class="{
+              'cursor-pointer': props.enableControl,
+              'cursor-not-allowed': !props.enableControl,
+            }"
             @mousedown="startDrag"
             @mousemove="onDrag"
             @mouseup="stopDrag"
@@ -107,7 +115,7 @@
           >
             <div
               class="absolute top-1 left-1/2 w-px h-2 bg-gray-800 transform -translate-x-1/2"
-              :style="{ transform: 'translateX(-50%) rotate(' + waterLevel * 2.7 + 'deg)' }"
+              :style="{ transform: 'translateX(-50%) rotate(' + internalWaterLevel * 2.7 + 'deg)' }"
             ></div>
             <div
               class="absolute inset-1 bg-gradient-to-b from-gray-200 to-gray-400 rounded-full"
@@ -134,37 +142,78 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 
 interface Props {
   width?: number
   height?: number
+  // Dynamic data props
+  waterLevel?: number
+  sensorId?: string
+  unit?: string
+  minLevel?: number
+  maxLevel?: number
+  enableControl?: boolean
+  showBubbles?: boolean
+  alertThresholds?: {
+    low: number
+    high: number
+  }
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   width: 360,
   height: 440,
+  waterLevel: 45,
+  sensorId: 'LEVEL-01',
+  unit: '%',
+  minLevel: 0,
+  maxLevel: 100,
+  enableControl: true,
+  showBubbles: true,
+  alertThresholds: () => ({ low: 20, high: 80 }),
 })
 
-const waterLevel = ref(45)
+const emit = defineEmits<{
+  'update:waterLevel': [value: number]
+  levelChange: [value: number]
+  alert: [type: 'low' | 'high' | 'normal', level: number]
+}>()
+
+const internalWaterLevel = ref(props.waterLevel)
 const isDragging = ref(false)
 const bubbles = ref<Array<{ id: number; x: number; y: number; delay: number; duration: number }>>(
   [],
 )
 const levelMarks = ref([10, 20, 30, 40, 50, 60, 70, 80, 90])
 
+// Alert status based on thresholds
+const alertStatus = computed(() => {
+  const level = internalWaterLevel.value
+  if (level <= props.alertThresholds.low) return 'low'
+  if (level >= props.alertThresholds.high) return 'high'
+  return 'normal'
+})
+
 const startDrag = (event: MouseEvent) => {
+  if (!props.enableControl) return
   isDragging.value = true
   event.preventDefault()
 }
 
 const onDrag = (event: MouseEvent) => {
-  if (isDragging.value) {
+  if (isDragging.value && props.enableControl) {
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
     const centerY = rect.top + rect.height / 2
     const deltaY = centerY - event.clientY
-    const newLevel = Math.max(0, Math.min(100, waterLevel.value + deltaY * 0.5))
-    waterLevel.value = newLevel
+    const newLevel = Math.max(
+      props.minLevel,
+      Math.min(props.maxLevel, internalWaterLevel.value + deltaY * 0.5),
+    )
+
+    internalWaterLevel.value = newLevel
+    emit('update:waterLevel', newLevel)
+    emit('levelChange', newLevel)
   }
 }
 
@@ -174,12 +223,12 @@ const stopDrag = () => {
 
 const generateBubbles = () => {
   bubbles.value = []
-  if (waterLevel.value > 10) {
+  if (props.showBubbles && internalWaterLevel.value > 10) {
     for (let i = 0; i < 5; i++) {
       bubbles.value.push({
         id: i,
         x: Math.random() * 80 + 10,
-        y: Math.random() * (waterLevel.value - 10),
+        y: Math.random() * (internalWaterLevel.value - 10),
         delay: Math.random() * 2,
         duration: 1 + Math.random() * 2,
       })
@@ -191,12 +240,28 @@ const updateBubbles = () => {
   generateBubbles()
 }
 
+// Watch for prop changes
+watch(
+  () => props.waterLevel,
+  (newValue) => {
+    internalWaterLevel.value = newValue
+  },
+)
+
+watch(
+  () => internalWaterLevel.value,
+  (newLevel) => {
+    generateBubbles()
+
+    // Emit alerts based on thresholds
+    const status = alertStatus.value
+    emit('alert', status, newLevel)
+  },
+)
+
 onMounted(() => {
+  internalWaterLevel.value = props.waterLevel
   generateBubbles()
   setInterval(updateBubbles, 2000)
-})
-
-watch(waterLevel, () => {
-  generateBubbles()
 })
 </script>

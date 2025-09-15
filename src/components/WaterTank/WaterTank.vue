@@ -15,7 +15,7 @@
             <!-- Water -->
             <div
               class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-600 via-blue-500 to-blue-400 transition-all duration-1000 ease-in-out overflow-hidden"
-              :style="{ height: waterLevel + '%' }"
+              :style="{ height: currentWaterLevel + '%' }"
             >
               <!-- Water Surface Animation -->
               <div
@@ -56,7 +56,7 @@
           <div
             class="absolute top-4 left-4 bg-gray-800 text-white px-3 py-1 rounded text-sm font-mono"
           >
-            TANK-01
+            {{ props.tankId }}
           </div>
         </div>
 
@@ -68,7 +68,7 @@
 
       <!-- Measurement Scale -->
       <div
-        class="absolute -right-28 top-0 h-[600px] w-16 bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 border-2 border-gray-400 rounded-r-lg shadow-lg"
+        class="absolute -right-28 top-0 h-full w-16 bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 border-2 border-gray-400 rounded-r-lg shadow-lg"
       >
         <!-- Scale Background -->
         <div class="absolute inset-1 bg-gradient-to-b from-gray-100 to-gray-200 rounded-r-md">
@@ -109,7 +109,7 @@
           <!-- Water Level Indicator -->
           <div
             class="absolute -left-2 w-6 h-1 bg-red-500 shadow-lg transition-all duration-1000 ease-in-out"
-            :style="{ bottom: waterLevel + '%' }"
+            :style="{ bottom: currentWaterLevel + '%' }"
           >
             <div
               class="absolute -left-1 top-0 w-0 h-0 border-l-2 border-l-red-500 border-t-2 border-t-transparent border-b-2 border-b-transparent"
@@ -117,7 +117,8 @@
             <div
               class="absolute -right-12 -top-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-mono whitespace-nowrap"
             >
-              {{ Math.round(waterLevel) }}% | {{ Math.round(waterLevel * 10) }}L
+              {{ Math.round(currentWaterLevel) }}% |
+              {{ Math.round((currentWaterLevel * props.capacity) / 100) }}L
             </div>
           </div>
         </div>
@@ -132,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 
 // Props
 const props = defineProps({
@@ -144,13 +145,40 @@ const props = defineProps({
     type: Number,
     default: 640,
   },
+  // Dynamic data props
+  waterLevel: {
+    type: Number,
+    default: 65,
+    validator: (value) => value >= 0 && value <= 100,
+  },
+  tankId: {
+    type: String,
+    default: 'TANK-01',
+  },
+  capacity: {
+    type: Number,
+    default: 1000, // Liters
+  },
+  enableAnimation: {
+    type: Boolean,
+    default: true,
+  },
+  showBubbles: {
+    type: Boolean,
+    default: true,
+  },
 })
 
-const waterLevel = ref(65)
 const bubbles = ref([])
+const currentWaterLevel = ref(props.waterLevel)
 
 // Generate random bubbles
 const generateBubbles = () => {
+  if (!props.showBubbles) {
+    bubbles.value = []
+    return
+  }
+
   const newBubbles = []
   for (let i = 0; i < 8; i++) {
     newBubbles.push({
@@ -165,23 +193,42 @@ const generateBubbles = () => {
   bubbles.value = newBubbles
 }
 
-// Simulate water level fluctuation
-const simulateWaterMovement = () => {
-  const baseLevel = 65
-  const variation = 3
-  waterLevel.value = baseLevel + Math.sin(Date.now() / 5000) * variation
+// Update water level with smooth transition
+const updateWaterLevel = () => {
+  currentWaterLevel.value = props.waterLevel
 }
+
+// Watch for prop changes
+watch(
+  () => props.waterLevel,
+  () => {
+    updateWaterLevel()
+  },
+)
+
+watch(
+  () => props.showBubbles,
+  () => {
+    generateBubbles()
+  },
+)
 
 let animationInterval
 
 onMounted(() => {
+  currentWaterLevel.value = props.waterLevel
   generateBubbles()
 
   // Regenerate bubbles every 6 seconds
   setInterval(generateBubbles, 6000)
 
-  // Animate water level
-  animationInterval = setInterval(simulateWaterMovement, 100)
+  // Optional: Add slight animation if enabled
+  if (props.enableAnimation) {
+    animationInterval = setInterval(() => {
+      const variation = 0.5
+      currentWaterLevel.value = props.waterLevel + Math.sin(Date.now() / 5000) * variation
+    }, 100)
+  }
 })
 
 onUnmounted(() => {

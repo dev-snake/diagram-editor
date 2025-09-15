@@ -10,15 +10,17 @@
         :scale="canvasScale"
         :canGroup="canvasRef?.canGroupSelectedComponents"
         :hasSelectedGroup="!!canvasRef?.selectedGroup"
-        :selectedInfo="getSelectionInfo()"
+        :hasComponentsToGroup="hasComponentsToGroup"
         @zoom-in="handleZoomIn"
         @zoom-out="handleZoomOut"
         @reset-zoom="handleResetZoom"
         @clear-canvas="handleClearCanvas"
         @create-group="handleCreateGroup"
         @ungroup="handleUngroup"
+        @select-all-and-group="handleSelectAllAndGroup"
       />
 
+      <!-- :selectedInfo="getSelectionInfo()"  -->
       <!-- Canvas -->
       <div class="flex-1 canvas-area">
         <Canvas ref="canvasRef" @scale-change="handleScaleChange" />
@@ -28,13 +30,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import Canvas from './components/Canvas.vue'
 import Toolbar from './components/Toolbar.vue'
 
 const canvasRef = ref()
 const canvasScale = ref(1)
+
+// Computed property to check if there are components that can be grouped
+const hasComponentsToGroup = computed(() => {
+  if (!canvasRef.value) return false
+  // This would need to be exposed from Canvas component
+  // For now, we'll assume there are components if canvas exists
+  return true
+})
 
 // Prevent context menu on right click only in canvas area (except for canvas components)
 const preventContextMenu = (e: MouseEvent) => {
@@ -93,6 +103,12 @@ const handleCreateGroup = () => {
 const handleUngroup = () => {
   if (canvasRef.value) {
     canvasRef.value.ungroupComponents()
+  }
+}
+
+const handleSelectAllAndGroup = () => {
+  if (canvasRef.value) {
+    canvasRef.value.selectAllComponents()
   }
 }
 

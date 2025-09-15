@@ -40,7 +40,11 @@
                   text-anchor="middle"
                   class="text-xs font-bold fill-gray-800"
                 >
-                  {{ (i - 1) * 10 }}
+                  {{
+                    Math.round(
+                      props.minPressure + ((i - 1) / 10) * (props.maxPressure - props.minPressure),
+                    )
+                  }}
                 </text>
               </g>
 
@@ -59,7 +63,7 @@
 
               <!-- Danger Zone (Red Zone) -->
               <path
-                :d="`M 100 100 L ${100 + 75 * Math.cos((144 * Math.PI) / 180)} ${100 + 75 * Math.sin((144 * Math.PI) / 180)} A 75 75 0 0 1 ${100 + 75 * Math.cos(0)} ${100 + 75 * Math.sin(0)} Z`"
+                :d="`M 100 100 L ${100 + 75 * Math.cos(((-180 + (props.dangerZone / 100) * 180) * Math.PI) / 180)} ${100 + 75 * Math.sin(((-180 + (props.dangerZone / 100) * 180) * Math.PI) / 180)} A 75 75 0 0 1 ${100 + 75 * Math.cos(0)} ${100 + 75 * Math.sin(0)} Z`"
                 fill="rgba(239, 68, 68, 0.2)"
               />
 
@@ -114,8 +118,8 @@
 
             <!-- Brand Label -->
             <div class="absolute top-16 left-1/2 transform -translate-x-1/2 text-center">
-              <div class="text-xs font-bold text-gray-800">PRESSURE</div>
-              <div class="text-xs text-gray-600">PSI</div>
+              <div class="text-xs font-bold text-gray-800">{{ props.gaugeId }}</div>
+              <div class="text-xs text-gray-600">{{ props.unit }}</div>
             </div>
 
             <!-- Digital Display -->
@@ -123,7 +127,7 @@
               <div
                 class="bg-black text-green-400 px-3 py-1 rounded text-sm font-mono border border-gray-400"
               >
-                {{ pressure.toFixed(1) }} PSI
+                {{ internalPressure.toFixed(1) }} {{ props.unit }}
               </div>
             </div>
 
@@ -134,19 +138,29 @@
               <div
                 :class="[
                   'w-2 h-2 rounded-full transition-colors duration-300',
-                  pressure < 70 ? 'bg-green-500' : pressure < 85 ? 'bg-yellow-500' : 'bg-red-500',
+                  alertStatus === 'normal'
+                    ? 'bg-green-500'
+                    : alertStatus === 'warning'
+                      ? 'bg-yellow-500'
+                      : 'bg-red-500',
                 ]"
                 :style="{
                   boxShadow:
-                    pressure < 70
+                    alertStatus === 'normal'
                       ? '0 0 8px #10b981'
-                      : pressure < 85
+                      : alertStatus === 'warning'
                         ? '0 0 8px #f59e0b'
                         : '0 0 8px #ef4444',
                 }"
               ></div>
               <span class="text-xs text-gray-700 font-medium">
-                {{ pressure < 70 ? 'NORMAL' : pressure < 85 ? 'CAUTION' : 'DANGER' }}
+                {{
+                  alertStatus === 'normal'
+                    ? 'NORMAL'
+                    : alertStatus === 'warning'
+                      ? 'CAUTION'
+                      : 'DANGER'
+                }}
               </span>
             </div>
           </div>
@@ -186,52 +200,125 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 interface Props {
   width?: number
   height?: number
+  // Dynamic data props
+  pressure?: number
+  maxPressure?: number
+  minPressure?: number
+  unit?: string
+  gaugeId?: string
+  enableControl?: boolean
+  dangerZone?: number
+  alertThreshold?: number
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   width: 360,
   height: 440,
+  pressure: 0,
+  maxPressure: 100,
+  minPressure: 0,
+  unit: 'PSI',
+  gaugeId: 'PG-01',
+  enableControl: true,
+  dangerZone: 80, // Percentage of max pressure where danger zone starts
+  alertThreshold: 90, // Percentage where alert should trigger
 })
 
-const pressure = ref(0)
+const emit = defineEmits<{
+  'update:pressure': [value: number]
+  pressureChange: [value: number]
+  alert: [type: 'normal' | 'warning' | 'danger', pressure: number]
+}>()
+
+const internalPressure = ref(props.pressure)
 
 const needleAngle = computed(() => {
-  // Convert pressure (0-100) to angle (-180 to 0 degrees)
-  return -180 + (pressure.value / 100) * 180
+  // Convert pressure to angle (-180 to 0 degrees)
+  const ratio =
+    (internalPressure.value - props.minPressure) / (props.maxPressure - props.minPressure)
+  return -180 + ratio * 180
+})
+
+const pressurePercentage = computed(() => {
+  return (
+    ((internalPressure.value - props.minPressure) / (props.maxPressure - props.minPressure)) * 100
+  )
+})
+
+const alertStatus = computed(() => {
+  const percentage = pressurePercentage.value
+  if (percentage >= props.alertThreshold) return 'danger'
+  if (percentage >= props.dangerZone) return 'warning'
+  return 'normal'
 })
 
 const increasePressure = () => {
-  if (pressure.value < 100) {
-    pressure.value = Math.min(100, pressure.value + 5)
-  }
+  if (!props.enableControl) return
+  const newPressure = Math.min(props.maxPressure, internalPressure.value + 5)
+  updatePressure(newPressure)
 }
 
 const decreasePressure = () => {
-  if (pressure.value > 0) {
-    pressure.value = Math.max(0, pressure.value - 5)
-  }
+  if (!props.enableControl) return
+  const newPressure = Math.max(props.minPressure, internalPressure.value - 5)
+  updatePressure(newPressure)
 }
 
-const updatePressure = (event: Event) => {
+const updatePressure = (newPressure: number) => {
+  internalPressure.value = newPressure
+  emit('update:pressure', newPressure)
+  emit('pressureChange', newPressure)
+}
+
+const onSliderChange = (event: Event) => {
+  if (!props.enableControl) return
   const target = event.target as HTMLInputElement
-  pressure.value = parseFloat(target.value)
+  const newPressure = parseFloat(target.value)
+  updatePressure(newPressure)
 }
 
-// Simulate realistic pressure changes
-onMounted(() => {
-  // Start with a random pressure
-  pressure.value = Math.random() * 60 + 20
+// Watch for prop changes
+watch(
+  () => props.pressure,
+  (newValue) => {
+    internalPressure.value = newValue
+  },
+)
 
-  // Optional: Add subtle pressure fluctuations
-  setInterval(() => {
-    const fluctuation = (Math.random() - 0.5) * 2
-    pressure.value = Math.max(0, Math.min(100, pressure.value + fluctuation))
-  }, 3000)
+// Watch pressure changes for alerts
+watch(
+  () => internalPressure.value,
+  (newPressure) => {
+    const status = alertStatus.value
+    emit('alert', status, newPressure)
+  },
+)
+
+// Simulate realistic pressure changes if no external data
+onMounted(() => {
+  internalPressure.value = props.pressure
+
+  // Optional: Add subtle pressure fluctuations only if no external control
+  if (props.pressure === 0) {
+    // Start with a random pressure
+    internalPressure.value = Math.random() * (props.maxPressure * 0.6) + props.maxPressure * 0.2
+
+    setInterval(() => {
+      if (props.enableControl) {
+        const fluctuation = (Math.random() - 0.5) * 2
+        const newPressure = Math.max(
+          props.minPressure,
+          Math.min(props.maxPressure, internalPressure.value + fluctuation),
+        )
+        internalPressure.value = newPressure
+      }
+    }, 3000)
+  }
 })
 </script>
 

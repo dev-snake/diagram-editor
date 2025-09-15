@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full h-full flex items-center justify-center bg-red-400 bg-gradient-to-r from-gray-500 to-gray-600"
+    class="w-full h-full flex items-center justify-center bg-gradient-to-r from-gray-500 to-gray-600"
     :style="{ width: width + 'px', height: height + 'px' }"
   >
     <div

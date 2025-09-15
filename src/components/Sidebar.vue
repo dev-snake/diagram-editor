@@ -52,6 +52,7 @@ import WaterLevelSensor from './WaterLevelSensor/WaterLevelSensor.vue'
 import Device from './device/Device.vue'
 import WaterPipe from './WaterPipe/WaterPipe.vue'
 import SimplePipe from './SimplePipe/SimplePipe.vue'
+import GridSquare from './GridSquare/GridSquare.vue'
 
 const searchQuery = ref('')
 
@@ -64,6 +65,7 @@ const processObjects = [
   { type: 'device', name: 'device', component: Device },
   { type: 'water-pipe', name: 'water-pipe', component: WaterPipe },
   { type: 'pipe', name: 'pipe', component: SimplePipe },
+  { type: 'grid-square', name: 'grid-square', component: GridSquare },
 ]
 
 const filteredProcessObjects = computed(() => {

@@ -15,8 +15,8 @@
             <!-- Fan/Propeller -->
             <div
               class="absolute inset-3 transition-transform duration-100 ease-linear"
-              :class="{ 'animate-spin': isRunning }"
-              :style="{ animationDuration: isRunning ? '0.1s' : '0s' }"
+              :class="{ 'animate-spin': internalIsRunning }"
+              :style="{ animationDuration: internalIsRunning ? '0.1s' : '0s' }"
             >
               <svg viewBox="0 0 100 100" class="w-full h-full">
                 <!-- Fan Blades -->
@@ -36,7 +36,9 @@
               <div
                 class="w-4 h-4 rounded-full border-2 border-gray-700"
                 :class="
-                  isRunning ? 'bg-green-400 shadow-green-400 shadow-lg animate-pulse' : 'bg-red-400'
+                  internalIsRunning
+                    ? 'bg-green-400 shadow-green-400 shadow-lg animate-pulse'
+                    : 'bg-red-400'
                 "
               ></div>
             </div>
@@ -52,9 +54,18 @@
 
           <!-- Pump Info Display -->
           <div class="bg-gray-700 rounded-lg px-4 py-2 mb-2 text-white text-center min-w-[120px]">
-            <div class="text-xs font-semibold">Water Pump</div>
-            <div class="text-xs mt-1" :class="isRunning ? 'text-green-400' : 'text-red-400'">
-              {{ isRunning ? 'RUNNING' : 'STOPPED' }}
+            <div class="text-xs font-semibold">{{ props.pumpId }}</div>
+            <div
+              class="text-xs mt-1"
+              :class="internalIsRunning ? 'text-green-400' : 'text-red-400'"
+            >
+              {{ displayStatus }}
+            </div>
+            <div v-if="props.flowRate > 0" class="text-xs text-blue-400 mt-1">
+              {{ props.flowRate.toFixed(1) }} L/min
+            </div>
+            <div v-if="props.powerConsumption > 0" class="text-xs text-yellow-400 mt-1">
+              {{ props.powerConsumption.toFixed(1) }}W
             </div>
           </div>
         </div>
@@ -65,15 +76,16 @@
             <!-- Power Button -->
             <button
               @click="togglePump"
-              class="relative w-16 h-16 hover:cursor-pointer rounded-full border-4 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-opacity-50"
+              :disabled="!props.enableControl"
+              class="relative w-16 h-16 hover:cursor-pointer rounded-full border-4 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
               :class="
-                isRunning
+                internalIsRunning
                   ? 'bg-green-500 border-green-400 shadow-green-400 shadow-lg focus:ring-green-300'
                   : 'bg-red-500 border-red-400 shadow-red-400 shadow-lg focus:ring-red-300'
               "
             >
               <span class="text-white font-bold text-sm">
-                {{ isRunning ? 'ON' : 'OFF' }}
+                {{ internalIsRunning ? 'ON' : 'OFF' }}
               </span>
             </button>
           </div>
@@ -83,7 +95,7 @@
         <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-4">
           <div class="w-16 h-10 bg-gradient-to-b from-gray-600 to-gray-800 rounded-b-lg shadow-lg">
             <!-- Water drops animation when running -->
-            <div v-if="isRunning" class="relative overflow-hidden h-full">
+            <div v-if="internalIsRunning" class="relative overflow-hidden h-full">
               <div
                 v-for="i in 4"
                 :key="i"
@@ -101,7 +113,7 @@
     </div>
 
     <!-- Water Effect Background -->
-    <div v-if="isRunning" class="absolute inset-0 pointer-events-none overflow-hidden">
+    <div v-if="internalIsRunning" class="absolute inset-0 pointer-events-none overflow-hidden">
       <div
         v-for="i in 15"
         :key="i"
@@ -118,23 +130,60 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 interface Props {
   width?: number
   height?: number
+  // Dynamic data props
+  isRunning?: boolean
+  pumpId?: string
+  flowRate?: number
+  powerConsumption?: number
+  enableControl?: boolean
+  statusText?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   width: 360,
   height: 440,
+  isRunning: false,
+  pumpId: 'PUMP-01',
+  flowRate: 0,
+  powerConsumption: 0,
+  enableControl: true,
+  statusText: '',
 })
 
-const isRunning = ref(false)
+const emit = defineEmits<{
+  'update:isRunning': [value: boolean]
+  statusChange: [isRunning: boolean]
+  toggle: []
+}>()
+
+const internalIsRunning = ref(props.isRunning)
 
 const togglePump = () => {
-  isRunning.value = !isRunning.value
+  if (!props.enableControl) return
+
+  internalIsRunning.value = !internalIsRunning.value
+  emit('update:isRunning', internalIsRunning.value)
+  emit('statusChange', internalIsRunning.value)
+  emit('toggle')
 }
+
+const displayStatus = computed(() => {
+  if (props.statusText) return props.statusText
+  return internalIsRunning.value ? 'RUNNING' : 'STOPPED'
+})
+
+// Watch for prop changes
+watch(
+  () => props.isRunning,
+  (newValue) => {
+    internalIsRunning.value = newValue
+  },
+)
 </script>
 
 <style scoped>

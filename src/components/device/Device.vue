@@ -26,9 +26,11 @@
           class="bg-gradient-to-r from-gray-700 to-gray-800 px-3 py-1 rounded-lg shadow-inner border border-gray-600"
         >
           <h2 class="text-gray-200 font-mono text-xs font-bold tracking-wider">
-            INDUSTRIAL IoT SENSOR
+            {{ props.deviceId || 'INDUSTRIAL IoT SENSOR' }}
           </h2>
-          <p class="text-gray-400 text-xs">Model: IIS-2024 | S/N: 001234</p>
+          <p class="text-gray-400 text-xs">
+            Model: {{ props.modelNumber }} | S/N: {{ props.serialNumber }}
+          </p>
         </div>
       </div>
 
@@ -46,9 +48,9 @@
           <div class="flex justify-between items-center mb-3 pb-1 border-b border-green-800">
             <div class="flex items-center gap-2">
               <div
-                :class="`w-3 h-3 rounded-full ${data.status === 'ONLINE' ? 'bg-green-400 shadow-green-400/50 shadow-lg' : 'bg-red-400 shadow-red-400/50 shadow-lg'}`"
+                :class="`w-3 h-3 rounded-full ${mergedData.status === 'ONLINE' ? 'bg-green-400 shadow-green-400/50 shadow-lg' : 'bg-red-400 shadow-red-400/50 shadow-lg'}`"
               ></div>
-              <span class="text-green-400 font-mono text-sm">{{ data.status }}</span>
+              <span class="text-green-400 font-mono text-sm">{{ mergedData.status }}</span>
             </div>
             <div class="text-green-400 font-mono text-xs">{{ currentTime }}</div>
           </div>
@@ -58,25 +60,25 @@
             <div class="bg-gray-900 rounded p-2 border border-green-800">
               <div class="text-green-300 text-xs mb-1">TEMPERATURE</div>
               <div class="text-green-400 font-mono text-lg font-bold">
-                {{ data.temperature.toFixed(1) }}°C
+                {{ mergedData.temperature?.toFixed(1) || '0.0' }}°C
               </div>
             </div>
             <div class="bg-gray-900 rounded p-2 border border-green-800">
               <div class="text-green-300 text-xs mb-1">HUMIDITY</div>
               <div class="text-green-400 font-mono text-lg font-bold">
-                {{ data.humidity.toFixed(1) }}%
+                {{ mergedData.humidity?.toFixed(1) || '0.0' }}%
               </div>
             </div>
             <div class="bg-gray-900 rounded p-2 border border-green-800">
               <div class="text-green-300 text-xs mb-1">PRESSURE</div>
               <div class="text-green-400 font-mono text-lg font-bold">
-                {{ data.pressure.toFixed(2) }} hPa
+                {{ mergedData.pressure?.toFixed(2) || '0.00' }} hPa
               </div>
             </div>
             <div class="bg-gray-900 rounded p-2 border border-green-800">
               <div class="text-green-300 text-xs mb-1">VOLTAGE</div>
               <div class="text-green-400 font-mono text-lg font-bold">
-                {{ data.voltage.toFixed(1) }}V
+                {{ mergedData.voltage?.toFixed(1) || '0.0' }}V
               </div>
             </div>
           </div>
@@ -85,11 +87,15 @@
           <div class="grid grid-cols-2 gap-2">
             <div class="bg-gray-900 rounded p-2 border border-green-800">
               <div class="text-green-300 text-xs mb-1">CURRENT</div>
-              <div class="text-green-400 font-mono text-sm">{{ data.current.toFixed(1) }}A</div>
+              <div class="text-green-400 font-mono text-sm">
+                {{ mergedData.current?.toFixed(1) || '0.0' }}A
+              </div>
             </div>
             <div class="bg-gray-900 rounded p-2 border border-green-800">
               <div class="text-green-300 text-xs mb-1">POWER</div>
-              <div class="text-green-400 font-mono text-sm">{{ data.power.toFixed(1) }}W</div>
+              <div class="text-green-400 font-mono text-sm">
+                {{ mergedData.power?.toFixed(1) || '0.0' }}W
+              </div>
             </div>
           </div>
         </div>
@@ -98,11 +104,13 @@
       <!-- Control Buttons -->
       <div class="flex justify-center gap-3">
         <button
+          @click="resetDevice"
           class="bg-gradient-to-b from-gray-400 to-gray-600 hover:from-gray-300 hover:to-gray-500 px-4 py-2 rounded-lg shadow-lg border border-gray-500 active:shadow-inner transition-all"
         >
           <span class="text-gray-800 font-mono text-xs font-bold">RESET</span>
         </button>
         <button
+          @click="configDevice"
           class="bg-gradient-to-b from-gray-400 to-gray-600 hover:from-gray-300 hover:to-gray-500 px-4 py-2 rounded-lg shadow-lg border border-gray-500 active:shadow-inner transition-all"
         >
           <span class="text-gray-800 font-mono text-xs font-bold">CONFIG</span>
@@ -122,19 +130,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+
+interface DeviceData {
+  temperature: number
+  humidity: number
+  pressure: number
+  voltage: number
+  current: number
+  power: number
+  status: 'ONLINE' | 'OFFLINE' | 'ERROR'
+  alarmActive: boolean
+  motorRunning: boolean
+  pumpActive: boolean
+}
 
 interface Props {
   width?: number
   height?: number
+  // Dynamic data props
+  deviceId?: string
+  serialNumber?: string
+  modelNumber?: string
+  data?: Partial<DeviceData>
+  enableSimulation?: boolean
+  updateInterval?: number
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   width: 360,
   height: 440,
+  deviceId: 'DEVICE-01',
+  serialNumber: '001234',
+  modelNumber: 'IIS-2024',
+  data: () => ({}),
+  enableSimulation: true,
+  updateInterval: 2000,
 })
 
-const data = ref({
+const emit = defineEmits<{
+  dataUpdate: [data: DeviceData]
+  statusChange: [status: string]
+  alert: [type: 'alarm' | 'warning' | 'info', message: string]
+}>()
+
+const internalData = ref<DeviceData>({
   temperature: 23.5,
   humidity: 65.2,
   pressure: 1013.25,
@@ -145,30 +185,81 @@ const data = ref({
   alarmActive: false,
   motorRunning: true,
   pumpActive: false,
+  ...props.data,
 })
 
 const screwPositions = ['top-2 left-2', 'top-2 right-2', 'bottom-2 left-2', 'bottom-2 right-2']
 
-// Cập nhật thời gian
+// Update current time
 const currentTime = computed(() => new Date().toLocaleTimeString())
 
-// Giả lập cập nhật dữ liệu real-time
-let interval: number | null = null
-onMounted(() => {
-  interval = setInterval(() => {
-    data.value = {
-      ...data.value,
-      temperature: 20 + Math.random() * 10,
-      humidity: 60 + Math.random() * 20,
-      pressure: 1010 + Math.random() * 10,
-      voltage: 12 + Math.random() * 0.8,
-      current: 2.5 + Math.random() * 0.6,
-      power: 30 + Math.random() * 10,
-      alarmActive: Math.random() > 0.9,
-      motorRunning: Math.random() > 0.3,
-      pumpActive: Math.random() > 0.7,
+// Merge external data with internal data
+const mergedData = computed(() => ({
+  ...internalData.value,
+  ...props.data,
+}))
+
+// Watch for external data changes
+watch(
+  () => props.data,
+  (newData) => {
+    if (newData) {
+      Object.assign(internalData.value, newData)
     }
-  }, 2000)
+  },
+  { deep: true },
+)
+
+// Simulate real-time data updates
+let interval: number | null = null
+
+const updateData = () => {
+  if (!props.enableSimulation) return
+
+  const newData: DeviceData = {
+    ...internalData.value,
+    temperature: 20 + Math.random() * 10,
+    humidity: 60 + Math.random() * 20,
+    pressure: 1010 + Math.random() * 10,
+    voltage: 12 + Math.random() * 0.8,
+    current: 2.5 + Math.random() * 0.6,
+    power: 30 + Math.random() * 10,
+    alarmActive: Math.random() > 0.9,
+    motorRunning: Math.random() > 0.3,
+    pumpActive: Math.random() > 0.7,
+  }
+
+  // Only update if no external data is provided for these fields
+  Object.keys(newData).forEach((key) => {
+    if (!(key in (props.data || {}))) {
+      ;(internalData.value as any)[key] = (newData as any)[key]
+    }
+  })
+
+  emit('dataUpdate', mergedData.value)
+
+  // Emit alerts for critical conditions
+  if (mergedData.value.temperature > 28) {
+    emit('alert', 'warning', 'High temperature detected')
+  }
+  if (mergedData.value.alarmActive) {
+    emit('alert', 'alarm', 'System alarm activated')
+  }
+}
+
+const resetDevice = () => {
+  internalData.value.alarmActive = false
+  emit('statusChange', 'RESET')
+}
+
+const configDevice = () => {
+  emit('statusChange', 'CONFIG')
+}
+
+onMounted(() => {
+  if (props.enableSimulation) {
+    interval = setInterval(updateData, props.updateInterval)
+  }
 })
 
 onUnmounted(() => {

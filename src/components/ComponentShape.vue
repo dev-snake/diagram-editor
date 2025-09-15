@@ -18,6 +18,7 @@
       :height="height"
     />
     <SimplePipe v-else-if="type === 'pipe'" :width="width" :height="height" />
+    <GridSquare v-else-if="type === 'grid-square'" :width="width" :height="height" />
 
     <div
       v-else
@@ -48,6 +49,7 @@ import WaterLevelSensor from './WaterLevelSensor/WaterLevelSensor.vue'
 import Device from './device/Device.vue'
 import WaterPipe from './WaterPipe/WaterPipe.vue'
 import SimplePipe from './SimplePipe/SimplePipe.vue'
+import GridSquare from './GridSquare/GridSquare.vue'
 interface Props {
   type: string
   width: number

@@ -1011,6 +1011,23 @@ const clearCanvas = () => {
   selectedGroup.value = null
 }
 
+// Select all components
+const selectAllComponents = () => {
+  // Only select components that are not in groups
+  const unGroupedComponents = components.value.filter((component) => !component.groupId)
+
+  if (unGroupedComponents.length > 0) {
+    selectedComponents.value = [...unGroupedComponents]
+    selectedComponent.value = null
+    selectedGroup.value = null
+
+    // Auto-group if there are selected components
+    if (canGroupSelectedComponents.value) {
+      createGroup()
+    }
+  }
+}
+
 // Keyboard shortcuts
 const handleKeyDown = (event: KeyboardEvent) => {
   if (event.code === 'Space') {
@@ -1020,6 +1037,9 @@ const handleKeyDown = (event: KeyboardEvent) => {
     if (canvasContainer.value) {
       canvasContainer.value.style.cursor = 'grab'
     }
+  } else if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+    event.preventDefault()
+    selectAllComponents()
   } else if ((event.ctrlKey || event.metaKey) && event.key === 'g') {
     event.preventDefault()
     if (canGroupSelectedComponents.value) {
@@ -1067,6 +1087,7 @@ defineExpose({
   resetZoom,
   clearCanvas,
   createGroup,
+  selectAllComponents,
   ungroupComponents: () => selectedGroup.value && ungroupComponents(selectedGroup.value),
   canGroupSelectedComponents,
   selectedComponents: readonly(selectedComponents),
