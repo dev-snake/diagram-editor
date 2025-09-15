@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full relative">
+  <div class="w-full h-full relative" :style="{ width: width + 'px', height: height + 'px' }">
     <!-- Water Pump Body -->
     <div
       class="relative bg-gradient-to-b from-gray-300 to-gray-600 rounded-lg shadow-2xl w-full h-full p-4"
@@ -117,8 +117,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+
+interface Props {
+  width?: number
+  height?: number
+}
+
+withDefaults(defineProps<Props>(), {
+  width: 360,
+  height: 440,
+})
 
 const isRunning = ref(false)
 

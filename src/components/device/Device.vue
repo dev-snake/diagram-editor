@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full h-full">
+  <div class="relative w-full h-full" :style="{ width: width + 'px', height: height + 'px' }">
     <!-- Main Device Housing -->
     <div
       class="relative bg-gradient-to-br from-gray-300 via-gray-400 to-gray-600 p-4 rounded-xl shadow-xl border-gray-500 w-full h-full"
@@ -121,8 +121,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+
+interface Props {
+  width?: number
+  height?: number
+}
+
+withDefaults(defineProps<Props>(), {
+  width: 360,
+  height: 440,
+})
 
 const data = ref({
   temperature: 23.5,
@@ -143,7 +153,7 @@ const screwPositions = ['top-2 left-2', 'top-2 right-2', 'bottom-2 left-2', 'bot
 const currentTime = computed(() => new Date().toLocaleTimeString())
 
 // Giả lập cập nhật dữ liệu real-time
-let interval
+let interval: number | null = null
 onMounted(() => {
   interval = setInterval(() => {
     data.value = {
@@ -162,6 +172,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  clearInterval(interval)
+  if (interval) {
+    clearInterval(interval)
+  }
 })
 </script>

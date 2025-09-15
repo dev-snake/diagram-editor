@@ -1,5 +1,8 @@
 <template>
-  <div class="flex items-center justify-center w-full h-full p-8">
+  <div
+    class="flex items-center justify-center w-full h-full p-8"
+    :style="{ width: width + 'px', height: height + 'px' }"
+  >
     <div class="absolute top-0 left-0 right-0 w-full">
       <!-- Main Sensor Housing -->
       <div
@@ -130,22 +133,34 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+
+interface Props {
+  width?: number
+  height?: number
+}
+
+withDefaults(defineProps<Props>(), {
+  width: 360,
+  height: 440,
+})
 
 const waterLevel = ref(45)
 const isDragging = ref(false)
-const bubbles = ref([])
+const bubbles = ref<Array<{ id: number; x: number; y: number; delay: number; duration: number }>>(
+  [],
+)
 const levelMarks = ref([10, 20, 30, 40, 50, 60, 70, 80, 90])
 
-const startDrag = (event) => {
+const startDrag = (event: MouseEvent) => {
   isDragging.value = true
   event.preventDefault()
 }
 
-const onDrag = (event) => {
+const onDrag = (event: MouseEvent) => {
   if (isDragging.value) {
-    const rect = event.currentTarget.getBoundingClientRect()
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
     const centerY = rect.top + rect.height / 2
     const deltaY = centerY - event.clientY
     const newLevel = Math.max(0, Math.min(100, waterLevel.value + deltaY * 0.5))

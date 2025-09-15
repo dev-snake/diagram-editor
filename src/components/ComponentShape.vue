@@ -2,15 +2,21 @@
   <div
     class="component-shape cursor-pointer h-full relative"
     :class="{ selected: selected }"
+    :style="{ width: width + 'px', height: height + 'px' }"
     @click="$emit('click')"
   >
-    <WaterTank v-if="type === 'watertank'" />
-    <WaterPump v-else-if="type === 'waterpumb'" />
-    <GateWave v-else-if="type === 'gatewave'" />
-    <PressureGauge v-else-if="type === 'pressure-gauge'" />
-    <WaterLevelSensor v-else-if="type === 'water-level-sensor'" />
-    <Device v-else-if="type === 'device'" />
-    <WaterPipe v-else-if="type === 'water-pipe'" />
+    <WaterTank v-if="type === 'watertank'" :width="width" :height="height" />
+    <WaterPump v-else-if="type === 'waterpumb'" :width="width" :height="height" />
+    <GateWave v-else-if="type === 'gatewave'" :width="width" :height="height" />
+    <PressureGauge v-else-if="type === 'pressure-gauge'" :width="width" :height="height" />
+    <WaterLevelSensor v-else-if="type === 'water-level-sensor'" :width="width" :height="height" />
+    <Device v-else-if="type === 'device'" :width="width" :height="height" />
+    <WaterPipe
+      v-else-if="type === 'water-pipe'"
+      :direction="direction"
+      :width="width"
+      :height="height"
+    />
     <SimplePipe v-else-if="type === 'pipe'" :width="width" :height="height" />
 
     <div
@@ -47,6 +53,7 @@ interface Props {
   width: number
   height: number
   selected?: boolean
+  direction?: 'left' | 'right'
 }
 
 const props = defineProps<Props>()

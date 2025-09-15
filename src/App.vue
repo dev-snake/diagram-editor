@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen w-screen overflow-hidden">
+  <div class="flex h-screen w-screen overflow-hidden select-none">
     <!-- Sidebar -->
     <Sidebar />
 
@@ -8,10 +8,15 @@
       <!-- Toolbar -->
       <Toolbar
         :scale="canvasScale"
+        :canGroup="canvasRef?.canGroupSelectedComponents"
+        :hasSelectedGroup="!!canvasRef?.selectedGroup"
+        :selectedInfo="getSelectionInfo()"
         @zoom-in="handleZoomIn"
         @zoom-out="handleZoomOut"
         @reset-zoom="handleResetZoom"
         @clear-canvas="handleClearCanvas"
+        @create-group="handleCreateGroup"
+        @ungroup="handleUngroup"
       />
 
       <!-- Canvas -->
@@ -77,5 +82,34 @@ const handleClearCanvas = () => {
   if (canvasRef.value) {
     canvasRef.value.clearCanvas()
   }
+}
+
+const handleCreateGroup = () => {
+  if (canvasRef.value) {
+    canvasRef.value.createGroup()
+  }
+}
+
+const handleUngroup = () => {
+  if (canvasRef.value) {
+    canvasRef.value.ungroupComponents()
+  }
+}
+
+const getSelectionInfo = () => {
+  if (!canvasRef.value) return ''
+
+  const selectedComponents = canvasRef.value.selectedComponents
+  const selectedGroup = canvasRef.value.selectedGroup
+
+  if (selectedGroup) {
+    return `Group selected (${selectedGroup.components.length} items)`
+  }
+
+  if (selectedComponents?.length > 0) {
+    return `${selectedComponents.length} item${selectedComponents.length > 1 ? 's' : ''} selected`
+  }
+
+  return ''
 }
 </script>

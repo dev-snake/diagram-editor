@@ -1,9 +1,12 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen p-8">
-    <div class="relative">
+  <div
+    class="flex items-center justify-center h-full absolute w-full left-0 p-8"
+    :style="{ width: width + 'px', height: height + 'px' }"
+  >
+    <div class="absolute w-full h-full">
       <!-- Main Valve Body -->
       <div
-        class="relative w-[314px] h-64 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 rounded-lg shadow-2xl border border-gray-600"
+        class="absolute top-0 w-full h-64 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 rounded-lg shadow-2xl border border-gray-600"
       >
         <!-- Top Flange -->
         <div
@@ -87,8 +90,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
+
+interface Props {
+  width?: number
+  height?: number
+}
+
+withDefaults(defineProps<Props>(), {
+  width: 360,
+  height: 440,
+})
 
 const isOpen = ref(false)
 

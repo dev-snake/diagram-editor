@@ -2,22 +2,11 @@
   <div
     class="flex items-center h-full"
     :class="direction === 'right' ? 'flex-row-reverse' : ''"
-    :style="{ width: totalWidth + 'px' }"
+    :style="{ width: width + 'px', height: height + 'px' }"
   >
-    <!-- Pipe connection (adjustable length) -->
-    <div
-      class="h-10 shadow-lg relative"
-      :class="[
-        direction === 'right'
-          ? 'bg-gradient-to-r from-gray-500 to-gray-600'
-          : 'bg-gradient-to-l from-gray-500 to-gray-600',
-      ]"
-      :style="{ width: pipeLength + 'px' }"
-    ></div>
-
     <!-- Pipe end fitting -->
     <div
-      class="w-12 h-full shadow-lg border-2 border-gray-700 relative"
+      class="w-full h-full shadow-lg border-2 border-gray-700 relative"
       :class="[
         direction === 'right'
           ? 'bg-gradient-to-l from-gray-400 to-gray-600 rounded-r-lg'
@@ -38,21 +27,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 // Props để điều chỉnh độ dài ống và hướng
 interface Props {
   pipeLength?: number // Độ dài của ống (px)
   direction?: 'left' | 'right' // Hướng của ống: 'left' (mặc định) hoặc 'right'
+  width?: number
+  height?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   pipeLength: 90, // Độ dài mặc định 90px
   direction: 'left', // Hướng mặc định: trái
+  width: 360,
+  height: 440,
 })
-
-// Tính tổng chiều rộng component
-const totalWidth = computed(() => props.pipeLength + 48) // pipeLength + width của pipe fitting (48px)
 </script>
 
 <style scoped>

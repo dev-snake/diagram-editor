@@ -1,11 +1,12 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen p-8">
+  <div class="absolute left-0 flex items-center justify-center h-full">
     <div class="relative">
       <!-- Water Tank Container -->
       <div class="relative">
         <!-- Tank Body -->
         <div
-          class="relative w-96 h-[600px] bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 rounded-lg shadow-2xl border-4 border-gray-700 overflow-hidden"
+          class="relative bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 rounded-lg shadow-2xl border-4 border-gray-700 overflow-hidden"
+          :style="{ width: width + 'px', height: height + 'px' }"
         >
           <!-- Tank Inner Shadow -->
           <div
@@ -132,6 +133,18 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+
+// Props
+const props = defineProps({
+  width: {
+    type: Number,
+    default: 500,
+  },
+  height: {
+    type: Number,
+    default: 640,
+  },
+})
 
 const waterLevel = ref(65)
 const bubbles = ref([])

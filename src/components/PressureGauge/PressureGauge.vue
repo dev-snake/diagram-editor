@@ -1,5 +1,8 @@
 <template>
-  <div class="flex items-center justify-center h-full w-full p-8">
+  <div
+    class="flex items-center justify-center h-full w-full p-8"
+    :style="{ width: width + 'px', height: height + 'px' }"
+  >
     <div class="absolute w-full h-full">
       <!-- Outer Ring -->
       <div
@@ -182,8 +185,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+
+interface Props {
+  width?: number
+  height?: number
+}
+
+withDefaults(defineProps<Props>(), {
+  width: 360,
+  height: 440,
+})
 
 const pressure = ref(0)
 
@@ -204,8 +217,9 @@ const decreasePressure = () => {
   }
 }
 
-const updatePressure = (event) => {
-  pressure.value = parseFloat(event.target.value)
+const updatePressure = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  pressure.value = parseFloat(target.value)
 }
 
 // Simulate realistic pressure changes

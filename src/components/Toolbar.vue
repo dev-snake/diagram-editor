@@ -6,6 +6,48 @@
     </div>
 
     <div class="flex items-center space-x-2">
+      <!-- Group/Ungroup controls -->
+      <div class="flex items-center space-x-1 mr-4">
+        <button
+          @click="$emit('create-group')"
+          :disabled="!canGroup"
+          class="px-3 py-1 text-sm bg-purple-50 border border-purple-300 text-purple-700 rounded hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Group selected elements (Ctrl+G) - Select 2+ items first"
+        >
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+          Group
+        </button>
+
+        <button
+          @click="$emit('ungroup')"
+          :disabled="!hasSelectedGroup"
+          class="px-3 py-1 text-sm bg-purple-50 border border-purple-300 text-purple-700 rounded hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Ungroup selected group (Ctrl+U) - Click on group border to select"
+        >
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          Ungroup
+        </button>
+      </div>
+
+      <!-- Selection info -->
+      <div v-if="selectedInfo" class="text-sm text-gray-600 mr-4">
+        {{ selectedInfo }}
+      </div>
+
       <!-- Zoom controls -->
       <button
         @click="$emit('zoom-out')"
@@ -48,6 +90,9 @@
 <script setup lang="ts">
 interface Props {
   scale: number
+  canGroup?: boolean
+  hasSelectedGroup?: boolean
+  selectedInfo?: string
 }
 
 defineProps<Props>()
@@ -57,5 +102,7 @@ defineEmits<{
   'zoom-out': []
   'reset-zoom': []
   'clear-canvas': []
+  'create-group': []
+  ungroup: []
 }>()
 </script>
