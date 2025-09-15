@@ -24,6 +24,7 @@
       <div
         v-for="component in components"
         :key="component.id"
+        data-canvas-component
         :style="{
           position: 'absolute',
           left: component.x + 'px',
@@ -38,6 +39,7 @@
         }"
         class="select-none"
         @mousedown="startDragComponent($event, component)"
+        @contextmenu="handleComponentRightClick($event, component)"
       >
         <component-shape
           :type="component.type"
@@ -107,12 +109,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Context Menu -->
+    <ContextMenu
+      :visible="contextMenu.visible"
+      :position="contextMenu.position"
+      :selectedComponent="contextMenu.component"
+      @delete="handleDeleteComponent"
+      @duplicate="handleDuplicateComponent"
+      @close="closeContextMenu"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import ComponentShape from './ComponentShape.vue'
+import ContextMenu from './ContextMenu.vue'
 
 interface DroppedComponent {
   id: number
@@ -154,6 +167,13 @@ const isResizing = ref(false)
 const resizeHandle = ref<string>('')
 const resizeStartPos = ref({ x: 0, y: 0 })
 const resizeStartSize = ref({ width: 0, height: 0, x: 0, y: 0 })
+
+// Context menu state
+const contextMenu = ref({
+  visible: false,
+  position: { x: 0, y: 0 },
+  component: null as DroppedComponent | null,
+})
 
 // Grid style computed property
 const gridStyle = computed(() => {
@@ -265,18 +285,28 @@ const handleDrop = (event: DragEvent) => {
       // Snap to grid
       const snappedX = Math.round(canvasX / gridSize) * gridSize
       const snappedY = Math.round(canvasY / gridSize) * gridSize
+      // Công thức tính : [w x h]
+
+      // Width: 18 ô grid = 18 × 20px = 360px
+      // Height: 22 ô grid = 22 × 20px = 440px
 
       // Default dimensions based on component type (snap to grid)
       const getDefaultDimensions = (type: string) => {
+        console.log('[Type]: ', type)
+
         switch (type) {
-          case 'rectangle':
-            return { width: 80, height: 40 } // 4 grid units x 2 grid units
-          case 'circle':
-            return { width: 60, height: 60 } // 3 grid units x 3 grid units
-          case 'triangle':
-            return { width: 60, height: 60 } // 3 grid units x 3 grid units
-          case 'textbox':
-            return { width: 100, height: 40 } // 5 grid units x 2 grid units
+          // Device Components
+          case 'device':
+            return { width: 360, height: 440 } // [18x22]:[w x h]
+          case 'water-level-sensor':
+            return { width: 140, height: 340 } // [7x17]:[w x h]
+          case 'waterpumb':
+            return { width: 400, height: 340 } // [13x17]:[w x h]
+          case 'pressure-gauge':
+            return { width: 324, height: 324 } // [18x18]:[w x h]
+          case 'water-pipe':
+            return { width: 140, height: 80 } // [18x18]:[w x h]
+
           default:
             return { width: 60, height: 60 }
         }
@@ -473,6 +503,67 @@ onMounted(() => {
     document.removeEventListener('click', handleClickOutside)
   }
 })
+
+// Context menu functions
+const handleComponentRightClick = (event: MouseEvent, component: DroppedComponent) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  // Select the component if not already selected
+  selectedComponent.value = component
+
+  // Set context menu position and component
+  contextMenu.value.position = { x: event.clientX, y: event.clientY }
+  contextMenu.value.component = component
+  contextMenu.value.visible = true
+}
+
+const closeContextMenu = () => {
+  contextMenu.value.visible = false
+  contextMenu.value.component = null
+}
+
+const handleDeleteComponent = () => {
+  if (contextMenu.value.component) {
+    const index = components.value.findIndex((comp) => comp.id === contextMenu.value.component!.id)
+    if (index !== -1) {
+      components.value.splice(index, 1)
+      // Clear selection if the deleted component was selected
+      if (selectedComponent.value?.id === contextMenu.value.component.id) {
+        selectedComponent.value = null
+      }
+    }
+  }
+}
+
+const handleDuplicateComponent = () => {
+  if (contextMenu.value.component) {
+    const originalComponent = contextMenu.value.component
+
+    // Generate a new unique ID
+    const newId = Date.now() + Math.random()
+
+    // Create a duplicate with offset position
+    const duplicateComponent: DroppedComponent = {
+      id: newId,
+      type: originalComponent.type,
+      x: originalComponent.x + 20, // Offset by 20px
+      y: originalComponent.y + 20, // Offset by 20px
+      width: originalComponent.width,
+      height: originalComponent.height,
+    }
+
+    // Snap the offset position to grid
+    duplicateComponent.x = Math.round(duplicateComponent.x / gridSize) * gridSize
+    duplicateComponent.y = Math.round(duplicateComponent.y / gridSize) * gridSize
+
+    // Add to components array
+    components.value.push(duplicateComponent)
+
+    // Select the duplicate
+    selectedComponent.value = duplicateComponent
+  }
+}
 
 // Exposed methods for parent component
 const zoomIn = () => {
