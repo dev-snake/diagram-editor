@@ -101,21 +101,6 @@
         </div>
       </div>
 
-      <!-- Control Buttons -->
-      <div class="flex justify-center gap-3">
-        <button
-          @click="resetDevice"
-          class="bg-gradient-to-b from-gray-400 to-gray-600 hover:from-gray-300 hover:to-gray-500 px-4 py-2 rounded-lg shadow-lg border border-gray-500 active:shadow-inner transition-all"
-        >
-          <span class="text-gray-800 font-mono text-xs font-bold">RESET</span>
-        </button>
-        <button
-          @click="configDevice"
-          class="bg-gradient-to-b from-gray-400 to-gray-600 hover:from-gray-300 hover:to-gray-500 px-4 py-2 rounded-lg shadow-lg border border-gray-500 active:shadow-inner transition-all"
-        >
-          <span class="text-gray-800 font-mono text-xs font-bold">CONFIG</span>
-        </button>
-      </div>
 
       <!-- Ventilation Grilles -->
       <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
