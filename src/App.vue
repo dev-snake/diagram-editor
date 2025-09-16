@@ -124,22 +124,22 @@ const handleSelectAllAndGroup = () => {
   }
 }
 
-const getSelectionInfo = () => {
-  if (!canvasRef.value) return ''
+// const getSelectionInfo = () => {
+//   if (!canvasRef.value) return ''
 
-  const selectedComponents = canvasRef.value.selectedComponents
-  const selectedGroup = canvasRef.value.selectedGroup
+//   const selectedComponents = canvasRef.value.selectedComponents
+//   const selectedGroup = canvasRef.value.selectedGroup
 
-  if (selectedGroup) {
-    return `Group selected (${selectedGroup.components.length} items)`
-  }
+//   if (selectedGroup) {
+//     return `Group selected (${selectedGroup.components.length} items)`
+//   }
 
-  if (selectedComponents?.length > 0) {
-    return `${selectedComponents.length} item${selectedComponents.length > 1 ? 's' : ''} selected`
-  }
+//   if (selectedComponents?.length > 0) {
+//     return `${selectedComponents.length} item${selectedComponents.length > 1 ? 's' : ''} selected`
+//   }
 
-  return ''
-}
+//   return ''
+// }
 
 // Save/Load handlers
 const handleSaveConfig = () => {

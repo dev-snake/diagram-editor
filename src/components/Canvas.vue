@@ -946,15 +946,54 @@ const startDragComponent = (event: MouseEvent, component: DroppedComponent) => {
   event.stopPropagation()
   event.preventDefault()
 
-  // If component belongs to a group, prevent individual dragging
-  // and trigger group selection instead
+  // If component belongs to a group, start dragging the group instead
   if (component.groupId) {
     const group = groups.value.find((g) => g.id === component.groupId)
     if (group) {
       selectedGroup.value = group
       selectedComponent.value = null
       selectedComponents.value = getGroupComponents(group.id)
-      // Don't start dragging - let user click on group border to drag
+
+      // Start dragging the group using the same logic as handleGroupMouseDown
+      const rect = canvasContainer.value?.getBoundingClientRect()
+      if (rect) {
+        const canvasX = (event.clientX - rect.left - panX.value) / scale.value
+        const canvasY = (event.clientY - rect.top - panY.value) / scale.value
+
+        dragOffset.value = {
+          x: canvasX - group.x,
+          y: canvasY - group.y,
+        }
+
+        const handleGroupDrag = (e: MouseEvent) => {
+          if (!selectedGroup.value) return
+
+          const rectInner = canvasContainer.value?.getBoundingClientRect()
+          if (rectInner) {
+            const canvasX = (e.clientX - rectInner.left - panX.value) / scale.value
+            const canvasY = (e.clientY - rectInner.top - panY.value) / scale.value
+
+            // Calculate new group position (snapped to grid)
+            const newGroupX = Math.round((canvasX - dragOffset.value.x) / gridSize) * gridSize
+            const newGroupY = Math.round((canvasY - dragOffset.value.y) / gridSize) * gridSize
+
+            // Calculate actual delta from current position
+            const actualDeltaX = newGroupX - selectedGroup.value.x
+            const actualDeltaY = newGroupY - selectedGroup.value.y
+
+            // Use the helper function to move group and all nested content
+            moveGroupRecursive(selectedGroup.value, actualDeltaX, actualDeltaY)
+          }
+        }
+
+        const handleGroupDragEnd = () => {
+          document.removeEventListener('mousemove', handleGroupDrag)
+          document.removeEventListener('mouseup', handleGroupDragEnd)
+        }
+
+        document.addEventListener('mousemove', handleGroupDrag)
+        document.addEventListener('mouseup', handleGroupDragEnd)
+      }
       return
     }
   }
@@ -1369,7 +1408,8 @@ const handleKeyDown = (event: KeyboardEvent) => {
     if (selectedGroup.value) {
       ungroupComponents(selectedGroup.value)
     }
-  } else if (event.key === 'Delete' || event.key === 'Backspace') {
+  } else if (event.key === 'Delete') {
+    // || event.key === 'Backspace'
     event.preventDefault()
     if (selectedGroup.value) {
       deleteGroup(selectedGroup.value)
