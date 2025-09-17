@@ -3,6 +3,7 @@
     ref="canvasContainer"
     class="relative w-full h-full overflow-hidden bg-white focus:outline-none"
     tabindex="0"
+    style="will-change: transform; transform: translateZ(0)"
     @wheel="handleWheel"
     @mousedown="handleMouseDown"
     @mousemove="handleMouseMove"
@@ -20,7 +21,8 @@
     <!-- Canvas Content -->
     <div
       ref="canvasContent"
-      class="absolute origin-top-left transition-transform duration-100"
+      class="absolute origin-top-left"
+      style="will-change: transform; transform: translateZ(0)"
       :style="contentStyle"
     >
       <!-- Dropped Components -->
@@ -164,6 +166,14 @@
       @delete-group="() => selectedGroup && deleteGroup(selectedGroup)"
       @close="closeContextMenu"
     />
+
+    <!-- Component Info Modal -->
+    <ComponentInfoModal
+      :isVisible="componentModal.visible"
+      :componentData="componentModal.componentData"
+      :deviceData="componentModal.deviceData"
+      @close="closeComponentModal"
+    />
   </div>
 </template>
 
@@ -172,6 +182,7 @@ import { ref, computed, onMounted, onUnmounted, watch, readonly } from 'vue'
 import ComponentShape from './ComponentShape.vue'
 import ContextMenu from './ContextMenu.vue'
 import GroupContainer from './GroupContainer.vue'
+import ComponentInfoModal from './ComponentInfoModal.vue'
 import { SaveLoadManager, type DiagramConfiguration } from '../utils/saveLoad'
 
 interface DroppedComponent {
@@ -194,6 +205,17 @@ interface ComponentGroup {
   width: number
   height: number
   parentGroupId?: number | null // ID of parent group if this is nested
+}
+
+interface ModalComponentData {
+  id: string
+  type: string
+  x: number
+  y: number
+  width: number
+  height: number
+  direction?: string
+  groupId?: string
 }
 
 const emit = defineEmits<{
@@ -250,6 +272,13 @@ const contextMenu = ref({
   component: null as DroppedComponent | null,
 })
 
+// Component info modal state
+const componentModal = ref({
+  visible: false,
+  componentData: null as ModalComponentData | null,
+  deviceData: null as any | null,
+})
+
 // Grid style computed property
 const gridStyle = computed(() => {
   const size = gridSize * scale.value
@@ -301,8 +330,9 @@ const handleMouseDown = (event: MouseEvent) => {
     const target = event.target as HTMLElement
     const isCanvasArea = target === canvasContainer.value || target === canvasContent.value
 
-    if (isCanvasArea && (isSpacePressed.value || event.ctrlKey || event.metaKey)) {
-      // Start panning when Space is pressed or Ctrl/Cmd is held
+    if (isCanvasArea && isSpacePressed.value) {
+      // Start panning when Space is pressed
+      event.preventDefault()
       isPanning.value = true
       lastMouseX.value = event.clientX
       lastMouseY.value = event.clientY
@@ -310,8 +340,17 @@ const handleMouseDown = (event: MouseEvent) => {
       if (canvasContainer.value) {
         canvasContainer.value.style.cursor = 'grabbing'
       }
-    } else if (isCanvasArea && !event.ctrlKey && !event.metaKey) {
-      // Start selection box
+    } else if (isCanvasArea && (event.ctrlKey || event.metaKey)) {
+      // Also allow panning with Ctrl/Cmd for alternative control
+      event.preventDefault()
+      isPanning.value = true
+      lastMouseX.value = event.clientX
+      lastMouseY.value = event.clientY
+      if (canvasContainer.value) {
+        canvasContainer.value.style.cursor = 'grabbing'
+      }
+    } else if (isCanvasArea && !event.ctrlKey && !event.metaKey && !isSpacePressed.value) {
+      // Start selection box only if not holding any modifier keys
       const rect = canvasContainer.value?.getBoundingClientRect()
       if (rect) {
         const mouseX = event.clientX - rect.left
@@ -333,22 +372,27 @@ const handleMouseDown = (event: MouseEvent) => {
           visible: true,
         }
       }
+      event.preventDefault()
     }
-    event.preventDefault()
   }
 }
 
 const handleMouseMove = (event: MouseEvent) => {
   if (isPanning.value) {
+    event.preventDefault()
     const deltaX = event.clientX - lastMouseX.value
     const deltaY = event.clientY - lastMouseY.value
 
-    panX.value += deltaX
-    panY.value += deltaY
+    // Only update if there's actually movement to avoid unnecessary re-renders
+    if (deltaX !== 0 || deltaY !== 0) {
+      panX.value += deltaX
+      panY.value += deltaY
 
-    lastMouseX.value = event.clientX
-    lastMouseY.value = event.clientY
+      lastMouseX.value = event.clientX
+      lastMouseY.value = event.clientY
+    }
   } else if (isMultiSelecting.value) {
+    event.preventDefault()
     // Update selection box
     const rect = canvasContainer.value?.getBoundingClientRect()
     if (rect) {
@@ -358,11 +402,13 @@ const handleMouseMove = (event: MouseEvent) => {
   }
 }
 
-const handleMouseUp = () => {
+const handleMouseUp = (event: MouseEvent) => {
   if (isMultiSelecting.value) {
     // Finish selection
     finishSelection()
   }
+
+  const wasPanning = isPanning.value
 
   isPanning.value = false
   isDraggingComponent.value = false
@@ -370,7 +416,7 @@ const handleMouseUp = () => {
   isMultiSelecting.value = false
   selectionBox.value.visible = false
 
-  // Reset cursor based on Space key state
+  // Reset cursor based on current state
   if (canvasContainer.value) {
     if (isSpacePressed.value) {
       canvasContainer.value.style.cursor = 'grab'
@@ -428,7 +474,7 @@ const handleDrop = (event: DragEvent) => {
           case 'device':
             return { width: 360, height: 440 } // [18x22]:[w x h]
           case 'water-level-sensor':
-            return { width: 140, height: 340 } // [7x17]:[w x h]
+            return { width: 260, height: 380 } // [13x19]:[w x h]
           case 'waterpumb':
             return { width: 400, height: 340 } // [13x17]:[w x h]
           case 'pressure-gauge':
@@ -472,6 +518,13 @@ const selectComponent = (component: DroppedComponent) => {
 // Handle component click for multi-selection
 const handleComponentClick = (event: MouseEvent, component: DroppedComponent) => {
   event.stopPropagation()
+
+  // Check for double click to open modal (but not for pipe, grid-square, water-pipe)
+  const excludedTypes = ['pipe', 'grid-square', 'water-pipe']
+  if (event.detail === 2 && !excludedTypes.includes(component.type)) {
+    openComponentModal(component)
+    return
+  }
 
   if (event.ctrlKey || event.metaKey) {
     // Multi-select mode
@@ -1279,6 +1332,41 @@ const closeContextMenu = () => {
   contextMenu.value.component = null
 }
 
+// Component info modal functions
+const openComponentModal = (component: DroppedComponent) => {
+  // Convert component ID from number to string for modal
+  const componentData = {
+    ...component,
+    id: component.id.toString(),
+    groupId: component.groupId?.toString() || undefined,
+  }
+
+  componentModal.value.componentData = componentData
+
+  // Generate mock device data if component is a device
+  if (component.type === 'device') {
+    componentModal.value.deviceData = {
+      temperature: Math.round((Math.random() * 10 + 20) * 10) / 10, // 20-30°C
+      humidity: Math.round((Math.random() * 40 + 40) * 10) / 10, // 40-80%
+      pressure: Math.round((Math.random() * 50 + 1000) * 100) / 100, // 1000-1050 hPa
+      voltage: Math.round((Math.random() * 2 + 11) * 10) / 10, // 11-13V
+      current: Math.round((Math.random() * 2 + 1) * 10) / 10, // 1-3A
+      power: Math.round((Math.random() * 20 + 20) * 10) / 10, // 20-40W
+      status: Math.random() > 0.8 ? 'OFFLINE' : ('ONLINE' as 'ONLINE' | 'OFFLINE' | 'ERROR'),
+    }
+  } else {
+    componentModal.value.deviceData = null
+  }
+
+  componentModal.value.visible = true
+}
+
+const closeComponentModal = () => {
+  componentModal.value.visible = false
+  componentModal.value.componentData = null
+  componentModal.value.deviceData = null
+}
+
 const handleDeleteComponent = () => {
   if (contextMenu.value.component) {
     const index = components.value.findIndex((comp) => comp.id === contextMenu.value.component!.id)
@@ -1390,10 +1478,12 @@ const selectAllComponents = () => {
 const handleKeyDown = (event: KeyboardEvent) => {
   if (event.code === 'Space') {
     event.preventDefault()
-    isSpacePressed.value = true
-    // Change cursor to grab
-    if (canvasContainer.value) {
-      canvasContainer.value.style.cursor = 'grab'
+    if (!isSpacePressed.value) {
+      isSpacePressed.value = true
+      // Change cursor to grab only if not already panning
+      if (canvasContainer.value && !isPanning.value) {
+        canvasContainer.value.style.cursor = 'grab'
+      }
     }
   } else if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
     event.preventDefault()
@@ -1428,8 +1518,9 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 const handleKeyUp = (event: KeyboardEvent) => {
   if (event.code === 'Space') {
+    event.preventDefault()
     isSpacePressed.value = false
-    // Reset cursor - if currently panning, set to grabbing, otherwise default
+    // Reset cursor properly based on current state
     if (canvasContainer.value) {
       if (isPanning.value) {
         canvasContainer.value.style.cursor = 'grabbing'
@@ -1545,6 +1636,8 @@ defineExpose({
   loadConfiguration,
   exportConfiguration,
   importConfiguration,
+  openComponentModal,
+  closeComponentModal,
 })
 </script>
 

@@ -5,282 +5,500 @@
       <div class="relative">
         <!-- Tank Body -->
         <div
-          class="relative bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 rounded-lg shadow-2xl border-4 border-gray-700 overflow-hidden"
-          :style="{ width: width + 'px', height: height + 'px' }"
+          class="relative bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600 rounded-2xl shadow-2xl border-4 border-slate-700 overflow-hidden"
+          :style="{
+            width: width + 'px',
+            height: height + 'px',
+            boxShadow:
+              '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2)',
+          }"
         >
           <!-- Tank Inner Shadow -->
           <div
-            class="absolute inset-2 bg-gradient-to-br from-gray-300 to-gray-500 rounded-md shadow-inner"
+            class="absolute inset-3 bg-gradient-to-br from-slate-300/50 via-slate-400/30 to-slate-500/40 rounded-xl shadow-inner backdrop-blur-sm"
           >
+            <!-- Glass Effect Overlay -->
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/10 rounded-xl"
+            ></div>
+
             <!-- Water -->
             <div
-              class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-600 via-blue-500 to-blue-400 transition-all duration-1000 ease-in-out overflow-hidden"
-              :style="{ height: currentWaterLevel + '%' }"
+              class="absolute bottom-0 left-0 right-0 transition-all duration-[2000ms] ease-in-out overflow-hidden"
+              :style="{
+                height: currentWaterLevel + '%',
+                background: `linear-gradient(180deg, 
+                  rgba(59, 130, 246, 0.95) 0%,
+                  rgba(37, 99, 235, 0.98) 50%,
+                  rgba(29, 78, 216, 1) 100%)`,
+              }"
             >
-              <!-- Water Surface Animation -->
+              <!-- Water Surface Animation Layer 1 -->
               <div
-                class="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-blue-300 via-blue-200 to-blue-300 opacity-60"
+                class="absolute top-0 left-0 right-0 h-8 overflow-hidden"
+                style="transform: translateZ(0)"
               >
                 <div
-                  class="wave-animation absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
+                  class="water-wave-1 absolute inset-0"
+                  :style="{
+                    background: `linear-gradient(90deg, 
+                      transparent 0%,
+                      rgba(147, 197, 253, 0.4) 25%,
+                      rgba(196, 224, 255, 0.6) 50%,
+                      rgba(147, 197, 253, 0.4) 75%,
+                      transparent 100%)`,
+                    filter: 'blur(1px)',
+                  }"
                 ></div>
               </div>
 
-              <!-- Water Ripples -->
+              <!-- Water Surface Animation Layer 2 -->
               <div
-                class="absolute top-2 left-0 right-0 h-2 bg-gradient-to-r from-blue-400 via-blue-300 to-blue-400 opacity-40"
+                class="absolute top-2 left-0 right-0 h-6 overflow-hidden"
+                style="transform: translateZ(0)"
               >
                 <div
-                  class="wave-animation-2 absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-50"
+                  class="water-wave-2 absolute inset-0"
+                  :style="{
+                    background: `linear-gradient(90deg,
+                      transparent 0%,
+                      rgba(219, 234, 254, 0.3) 30%,
+                      rgba(255, 255, 255, 0.5) 50%,
+                      rgba(219, 234, 254, 0.3) 70%,
+                      transparent 100%)`,
+                    filter: 'blur(0.5px)',
+                  }"
                 ></div>
               </div>
+
+              <!-- Water Surface Animation Layer 3 (Shimmer) -->
+              <div
+                class="absolute top-4 left-0 right-0 h-4 overflow-hidden opacity-70"
+                style="transform: translateZ(0)"
+              >
+                <div
+                  class="water-shimmer absolute inset-0"
+                  :style="{
+                    background: `linear-gradient(90deg,
+                      transparent 0%,
+                      rgba(255, 255, 255, 0.2) 48%,
+                      rgba(255, 255, 255, 0.4) 50%,
+                      rgba(255, 255, 255, 0.2) 52%,
+                      transparent 100%)`,
+                  }"
+                ></div>
+              </div>
+
+              <!-- Depth Gradient Overlay -->
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-blue-900/30 via-transparent to-transparent opacity-60"
+              ></div>
 
               <!-- Bubbles -->
               <div
                 v-for="bubble in bubbles"
                 :key="bubble.id"
-                class="absolute bg-white rounded-full opacity-60 animate-bounce"
+                class="bubble absolute rounded-full"
                 :style="{
                   left: bubble.x + '%',
                   bottom: bubble.y + '%',
                   width: bubble.size + 'px',
                   height: bubble.size + 'px',
+                  background: `radial-gradient(circle at 30% 30%, 
+                    rgba(255, 255, 255, 0.9) 0%, 
+                    rgba(219, 234, 254, 0.4) 50%,
+                    rgba(147, 197, 253, 0.2) 100%)`,
+                  boxShadow:
+                    'inset -2px -2px 4px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(255, 255, 255, 0.3)',
                   animationDelay: bubble.delay + 's',
                   animationDuration: bubble.duration + 's',
                 }"
               ></div>
+
+              <!-- Light Reflection -->
+              <div
+                class="absolute top-0 left-0 w-full h-full opacity-30"
+                style="
+                  background: linear-gradient(
+                    135deg,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    transparent 100%
+                  );
+                "
+              ></div>
             </div>
+
+            <!-- Water Level Transition Glow -->
+            <div
+              class="absolute left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 opacity-0 transition-opacity duration-500"
+              :class="{ 'opacity-60 water-glow': isTransitioning }"
+              :style="{ bottom: currentWaterLevel + '%' }"
+            ></div>
           </div>
 
-          <!-- Tank Label -->
+          <!-- Tank Label with Glow -->
           <div
-            class="absolute top-4 left-4 bg-gray-800 text-white px-3 py-1 rounded text-sm font-mono"
+            class="absolute top-4 left-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white px-4 py-2 rounded-lg text-sm font-mono shadow-lg border border-slate-600/50"
+            style="
+              box-shadow:
+                0 4px 6px -1px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(59, 130, 246, 0.2);
+            "
           >
-            {{ props.tankId }}
+            <span class="font-bold tracking-wider">{{ props.tankId }}</span>
+          </div>
+
+          <!-- Capacity Indicator -->
+          <div
+            class="absolute bottom-4 right-4 bg-slate-800/80 backdrop-blur text-white px-3 py-1 rounded-lg text-xs font-mono"
+          >
+            <span class="opacity-70">CAP:</span> {{ props.capacity }}L
           </div>
         </div>
 
-        <!-- Tank Base -->
+        <!-- Tank Base with 3D Effect -->
         <div
-          class="w-84 h-6 bg-gradient-to-b from-gray-600 to-gray-800 rounded-b-xl mx-auto shadow-lg border-x-4 border-b-4 border-gray-700"
-        ></div>
+          class="relative h-8 bg-gradient-to-b from-slate-600 via-slate-700 to-slate-800 rounded-b-2xl mx-auto shadow-2xl border-x-4 border-b-4 border-slate-700"
+          :style="{ width: width + 8 + 'px' }"
+        >
+          <div
+            class="absolute inset-x-4 top-0 h-1 bg-gradient-to-r from-transparent via-slate-500 to-transparent"
+          ></div>
+        </div>
       </div>
 
       <!-- Measurement Scale -->
       <div
-        class="absolute -right-28 top-0 h-full w-16 bg-gradient-to-b from-gray-300 via-gray-200 to-gray-300 border-2 border-gray-400 rounded-r-lg shadow-lg"
+        class="absolute -right-32 top-0 h-full w-20 bg-gradient-to-b from-slate-200 via-slate-100 to-slate-200 border-2 border-slate-400 rounded-r-xl shadow-xl"
+        style="box-shadow: 5px 0 15px -3px rgba(0, 0, 0, 0.2)"
       >
         <!-- Scale Background -->
-        <div class="absolute inset-1 bg-gradient-to-b from-gray-100 to-gray-200 rounded-r-md">
+        <div
+          class="absolute inset-1 bg-gradient-to-b from-white/90 to-slate-100/90 rounded-r-lg backdrop-blur-sm"
+        >
           <!-- Major Scale Lines (every 20%) -->
           <div
             v-for="i in 6"
             :key="'major-' + i"
-            class="absolute left-0 w-8 border-t-2 border-gray-700"
+            class="absolute left-0 w-10 border-t-2 transition-all duration-300"
+            :class="currentWaterLevel >= (i - 1) * 20 ? 'border-blue-600' : 'border-slate-700'"
             :style="{ bottom: (i - 1) * 20 + '%' }"
           >
-            <span class="absolute -left-12 -top-2 text-xs font-mono text-gray-700 font-bold"
-              >{{ (i - 1) * 20 }}%</span
+            <span
+              class="absolute -left-14 -top-2.5 text-xs font-mono font-bold transition-colors duration-300"
+              :class="currentWaterLevel >= (i - 1) * 20 ? 'text-blue-600' : 'text-slate-700'"
             >
+              {{ (i - 1) * 20 }}%
+            </span>
           </div>
 
           <!-- Minor Scale Lines (every 10%) -->
           <div
             v-for="i in 11"
             :key="'minor-' + i"
-            class="absolute left-0 w-6 border-t border-gray-600"
+            class="absolute left-0 w-6 border-t transition-all duration-300"
+            :class="currentWaterLevel >= (i - 1) * 10 ? 'border-blue-500/60' : 'border-slate-500'"
             :style="{ bottom: (i - 1) * 10 + '%' }"
           >
             <span
               v-if="(i - 1) % 2 !== 0"
-              class="absolute -left-8 -top-1 text-xs font-mono text-gray-600"
-              >{{ (i - 1) * 10 }}</span
+              class="absolute -left-9 -top-1.5 text-xs font-mono transition-colors duration-300"
+              :class="currentWaterLevel >= (i - 1) * 10 ? 'text-blue-500' : 'text-slate-600'"
             >
+              {{ (i - 1) * 10 }}
+            </span>
           </div>
 
           <!-- Micro Scale Lines (every 5%) -->
           <div
             v-for="i in 21"
             :key="'micro-' + i"
-            class="absolute left-0 w-3 border-t border-gray-500 opacity-60"
+            class="absolute left-0 w-3 border-t border-slate-400/40"
             :style="{ bottom: (i - 1) * 5 + '%' }"
           ></div>
 
-          <!-- Water Level Indicator -->
+          <!-- Water Level Indicator with Animation -->
           <div
-            class="absolute -left-2 w-6 h-1 bg-red-500 shadow-lg transition-all duration-1000 ease-in-out"
+            class="absolute -left-3 transition-all duration-[2000ms] ease-in-out"
             :style="{ bottom: currentWaterLevel + '%' }"
           >
+            <!-- Indicator Arrow -->
+            <div class="relative flex items-center">
+              <div
+                class="w-8 h-1 bg-gradient-to-r from-red-500 to-red-600 shadow-lg indicator-pulse"
+              ></div>
+              <div
+                class="absolute -left-1 w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-r-4 border-r-red-500"
+              ></div>
+            </div>
+
+            <!-- Digital Display -->
             <div
-              class="absolute -left-1 top-0 w-0 h-0 border-l-2 border-l-red-500 border-t-2 border-t-transparent border-b-2 border-b-transparent"
-            ></div>
-            <div
-              class="absolute -right-12 -top-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-mono whitespace-nowrap"
+              class="absolute -right-16 -top-3 bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-mono whitespace-nowrap shadow-lg border border-red-500/30"
+              style="
+                box-shadow:
+                  0 4px 6px -1px rgba(0, 0, 0, 0.3),
+                  0 0 15px rgba(239, 68, 68, 0.4);
+              "
             >
-              {{ Math.round(currentWaterLevel) }}% |
-              {{ Math.round((currentWaterLevel * props.capacity) / 100) }}L
+              <div class="flex items-center gap-2">
+                <span class="font-bold">{{ Math.round(currentWaterLevel) }}%</span>
+                <span class="opacity-80">|</span>
+                <span>{{ Math.round((currentWaterLevel * props.capacity) / 100) }}L</span>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Scale Title -->
-        <div class="absolute -top-8 left-0 right-0 text-center">
-          <span class="bg-gray-700 text-white px-2 py-1 rounded text-xs font-mono">LEVEL</span>
+        <div class="absolute -top-10 left-0 right-0 text-center">
+          <span
+            class="bg-gradient-to-r from-slate-700 to-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-mono tracking-wider shadow-lg"
+          >
+            LEVEL
+          </span>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 
-// Props
-const props = defineProps({
-  width: {
-    type: Number,
-    default: 500,
-  },
-  height: {
-    type: Number,
-    default: 640,
-  },
-  // Dynamic data props
-  waterLevel: {
-    type: Number,
-    default: 65,
-    validator: (value) => value >= 0 && value <= 100,
-  },
-  tankId: {
-    type: String,
-    default: 'TANK-01',
-  },
-  capacity: {
-    type: Number,
-    default: 1000, // Liters
-  },
-  enableAnimation: {
-    type: Boolean,
-    default: true,
-  },
-  showBubbles: {
-    type: Boolean,
-    default: true,
-  },
+interface Bubble {
+  id: number
+  x: number
+  y: number
+  size: number
+  delay: number
+  duration: number
+}
+
+interface Props {
+  width?: number
+  height?: number
+  waterLevel?: number
+  tankId?: string
+  capacity?: number
+  enableAnimation?: boolean
+  showBubbles?: boolean
+}
+
+// Props with TypeScript
+const props = withDefaults(defineProps<Props>(), {
+  width: 500,
+  height: 640,
+  waterLevel: 90,
+  tankId: 'TANK-01',
+  capacity: 1000,
+  enableAnimation: true,
+  showBubbles: true,
 })
 
-const bubbles = ref([])
+const bubbles = ref<Bubble[]>([])
 const currentWaterLevel = ref(props.waterLevel)
+const isTransitioning = ref(false)
 
-// Generate random bubbles
-const generateBubbles = () => {
+// Generate random bubbles with better distribution
+const generateBubbles = (): void => {
   if (!props.showBubbles) {
     bubbles.value = []
     return
   }
 
-  const newBubbles = []
-  for (let i = 0; i < 8; i++) {
+  const newBubbles: Bubble[] = []
+  const bubbleCount = 12
+
+  for (let i = 0; i < bubbleCount; i++) {
     newBubbles.push({
-      id: Date.now() + i,
-      x: Math.random() * 80 + 10,
-      y: Math.random() * 60 + 5,
-      size: Math.random() * 8 + 4,
-      delay: Math.random() * 3,
-      duration: Math.random() * 2 + 2,
+      id: Date.now() + i + Math.random(),
+      x: 10 + Math.random() * 80,
+      y: Math.random() * currentWaterLevel.value * 0.9,
+      size: 4 + Math.random() * 10,
+      delay: Math.random() * 4,
+      duration: 3 + Math.random() * 4,
     })
   }
   bubbles.value = newBubbles
 }
 
 // Update water level with smooth transition
-const updateWaterLevel = () => {
-  currentWaterLevel.value = props.waterLevel
+const updateWaterLevel = (): void => {
+  isTransitioning.value = true
+  currentWaterLevel.value = Math.max(0, Math.min(100, props.waterLevel))
+
+  setTimeout(() => {
+    isTransitioning.value = false
+  }, 2000)
 }
 
 // Watch for prop changes
 watch(
   () => props.waterLevel,
-  () => {
+  (newLevel) => {
     updateWaterLevel()
   },
 )
 
 watch(
   () => props.showBubbles,
-  () => {
+  (show) => {
     generateBubbles()
   },
 )
 
-let animationInterval
+let animationInterval: number | undefined
+let bubbleInterval: number | undefined
+let waveAnimationFrame: number | undefined
 
 onMounted(() => {
   currentWaterLevel.value = props.waterLevel
   generateBubbles()
 
-  // Regenerate bubbles every 6 seconds
-  setInterval(generateBubbles, 6000)
+  // Regenerate bubbles periodically with stagger
+  bubbleInterval = window.setInterval(() => {
+    generateBubbles()
+  }, 8000)
 
-  // Optional: Add slight animation if enabled
+  // Subtle water level animation
   if (props.enableAnimation) {
-    animationInterval = setInterval(() => {
-      const variation = 0.5
-      currentWaterLevel.value = props.waterLevel + Math.sin(Date.now() / 5000) * variation
-    }, 100)
+    let time = 0
+    const animate = () => {
+      time += 0.02
+      const variation = Math.sin(time) * 0.3 + Math.sin(time * 1.5) * 0.2
+      currentWaterLevel.value = Math.max(0, Math.min(100, props.waterLevel + variation))
+      waveAnimationFrame = requestAnimationFrame(animate)
+    }
+    waveAnimationFrame = requestAnimationFrame(animate)
   }
 })
 
 onUnmounted(() => {
-  if (animationInterval) {
-    clearInterval(animationInterval)
-  }
+  if (animationInterval) clearInterval(animationInterval)
+  if (bubbleInterval) clearInterval(bubbleInterval)
+  if (waveAnimationFrame) cancelAnimationFrame(waveAnimationFrame)
 })
 </script>
 
 <style scoped>
-@keyframes wave {
-  0%,
-  100% {
-    transform: translateX(-100%);
+/* Smooth Wave Animations */
+@keyframes wave1 {
+  0% {
+    transform: translateX(-200%) translateZ(0);
   }
-  50% {
-    transform: translateX(100%);
+  100% {
+    transform: translateX(200%) translateZ(0);
   }
 }
 
 @keyframes wave2 {
-  0%,
+  0% {
+    transform: translateX(200%) translateZ(0);
+  }
   100% {
-    transform: translateX(100%);
+    transform: translateX(-200%) translateZ(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-200%) translateZ(0);
+    opacity: 0;
   }
   50% {
-    transform: translateX(-100%);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(200%) translateZ(0);
+    opacity: 0;
   }
 }
 
-.wave-animation {
-  animation: wave 4s ease-in-out infinite;
+.water-wave-1 {
+  animation: wave1 8s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+  will-change: transform;
 }
 
-.wave-animation-2 {
-  animation: wave2 6s ease-in-out infinite;
+.water-wave-2 {
+  animation: wave2 12s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+  animation-delay: -2s;
+  will-change: transform;
 }
 
-/* Custom bounce animation for bubbles */
-@keyframes bubble-float {
-  0%,
-  100% {
-    transform: translateY(0px) scale(1);
+.water-shimmer {
+  animation: shimmer 15s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+  will-change: transform, opacity;
+}
+
+/* Enhanced Bubble Animation */
+@keyframes bubble-rise {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.8);
+    opacity: 0;
+  }
+  10% {
     opacity: 0.6;
+    transform: translateY(-5px) translateX(2px) scale(1);
   }
   50% {
-    transform: translateY(-10px) scale(1.1);
+    opacity: 0.8;
+    transform: translateY(-20px) translateX(-3px) scale(1.05);
+  }
+  90% {
+    opacity: 0.6;
+    transform: translateY(-35px) translateX(4px) scale(0.95);
+  }
+  100% {
+    transform: translateY(-40px) translateX(0) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.bubble {
+  animation: bubble-rise 4s cubic-bezier(0.33, 0, 0.67, 1) infinite;
+  will-change: transform, opacity;
+}
+
+/* Water Glow Effect */
+@keyframes water-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
     opacity: 0.8;
   }
 }
 
-.animate-bounce {
-  animation: bubble-float 3s ease-in-out infinite;
+.water-glow {
+  animation: water-glow 2s ease-in-out;
+}
+
+/* Indicator Pulse */
+@keyframes indicator-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      0 0 10px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      0 0 20px rgba(239, 68, 68, 0.8);
+  }
+}
+
+.indicator-pulse {
+  animation: indicator-pulse 2s ease-in-out infinite;
+}
+
+/* Performance Optimizations */
+* {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 </style>
