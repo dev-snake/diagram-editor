@@ -3,13 +3,17 @@
     v-if="isVisible"
     class="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50"
     @click="handleBackdropClick"
+    @wheel.prevent
   >
     <div
-      class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
+      class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col"
       @click.stop
+      @wheel.stop
     >
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+      <div
+        class="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0"
+      >
         <h2 class="text-xl font-semibold text-gray-800">{{ modalTitle }}</h2>
         <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 transition-colors">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,24 +28,31 @@
       </div>
 
       <!-- Content -->
-      <div class="px-6 py-4">
+      <div class="px-6 py-4 flex-1 overflow-y-auto">
         <!-- Component Properties -->
-        <div class="space-y-4">
+        <div class="space-y-4" v-if="componentData">
           <!-- items  -->
           <!--  -->
-          <div>
-            <span>{{ componentData?.type }}</span>
-          </div>
+          <template v-if="componentData.type === 'device'">
+            <div>
+              <div v-for="(i, key) in items" :key="i.id">
+                {{ i.displayName }}
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+      <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 flex-shrink-0">
         <button
           @click="$emit('close')"
           class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
         >
           Đóng
+        </button>
+        <button class="px-6 py-2 text-sm font-medium text-white border rounded-sm bg-blue-400">
+          Lưu
         </button>
       </div>
     </div>
@@ -49,52 +60,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
-
-interface ComponentData {
-  id: string
-  type: string
-  x: number
-  y: number
-  width: number
-  height: number
-  direction?: string
-  groupId?: string
-}
-
-interface DeviceData {
-  temperature?: number
-  humidity?: number
-  pressure?: number
-  voltage?: number
-  current?: number
-  power?: number
-  status?: 'ONLINE' | 'OFFLINE' | 'ERROR'
-}
+import type { ComponentData, ComponentKey } from '@/types/component'
+import { computed, onMounted, watch, inject, ref } from 'vue'
 
 interface Props {
   isVisible: boolean
   componentData?: ComponentData | null
-  deviceData?: DeviceData | null
+  deviceData?: any | null
 }
-type ComponentKey =
-  | 'watertank'
-  | 'waterpumb'
-  | 'gatewave'
-  | 'pressure-gauge'
-  | 'water-level-sensor'
-  | 'device'
-  | 'water-pipe'
-  | 'pipe'
-  | 'grid-square'
 
 const props = withDefaults(defineProps<Props>(), {
   isVisible: false,
   componentData: null,
   deviceData: null,
 })
-console.log(props, 'props')
-
+const canvasState = inject<CanvasState>('canvasState')
+const items = ref<any[]>([])
 const emit = defineEmits<{
   close: []
 }>()
@@ -128,60 +109,84 @@ const handleBackdropClick = (event: MouseEvent) => {
     emit('close')
   }
 }
-const getApiByType = async (type: ComponentKey) => {
-  try {
-    const response = await fetch('https://jsonplaceholder.typicode.com/todos/1')
-    console.log(response)
+// Map type -> endpoint
+const baseURL = 'http://localhost:8998/v1'
+const apiMap: Record<ComponentKey, string> = {
+  watertank: 'https://api.example.com/watertank',
+  waterpumb: 'https://api.example.com/waterpumb',
+  gatewave: 'https://api.example.com/gatewave',
+  'pressure-gauge': 'https://api.example.com/pressure-gauge',
+  'water-level-sensor': 'https://api.example.com/water-level-sensor',
+  device: `${baseURL}/device`,
+  'water-pipe': 'https://api.example.com/water-pipe',
+  pipe: 'https://api.example.com/pipe',
+  'grid-square': 'https://api.example.com/grid-square',
+}
 
-    return response
-  } catch (error) {
-    console.log(error)
+const fetchData = async (type: ComponentKey) => {
+  const url = apiMap[type]
+  if (!url) {
+    console.warn(`❌ No endpoint for type: ${type}`)
+    return null
+  }
+
+  try {
+    const accessToken =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZkYjlhZTk5LThmNDAtNGY4YS1iNTVlLTJjODQzOTdhNDVhMyIsImVtYWlsIjoic3VwZXJhZG1pbnNhaWdvbnZhbHZlQGdtYWlsLmNvbSIsInRva2VuSWQiOiI2YzNmOTYwZS05ZmQ3LTQ0NTUtYjhmZC1lYzA3MTQwMjhmZDEiLCJpYXQiOjE3NTgwOTYxODcsImV4cCI6MTAwMTc1ODA5NjE4Nn0._621odsO-7BMC-iRM13Iqjl-SZZisLeq-I6sxVpZZ-4'
+    const options = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+
+    const res = await fetch(url, options)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    console.error('❌ Fetch error:', err)
+    return null
   }
 }
-const getDataByType = async (type: ComponentKey) => {
-  let data = null
-  switch (type) {
-    case 'watertank':
-      data = getApiByType(type)
-      break
-    case 'waterpumb':
-      data = getApiByType(type)
-      break
-    case 'gatewave':
-      data = getApiByType(type)
-      break
-    case 'pressure-gauge':
-      data = getApiByType(type)
-      break
-    case 'water-level-sensor':
-      data = getApiByType(type)
-      break
-    case 'device':
-      data = getApiByType(type)
-      break
-    case 'water-pipe':
-      data = getApiByType(type)
-      break
-    case 'pipe':
-      data = getApiByType(type)
-      break
-    case 'grid-square':
-      data = getApiByType(type)
-      break
-    default:
-      break
-  }
-}
+
+const loadData = (type: ComponentKey) => fetchData(type)
+
 watch(
   () => props.isVisible,
-  () => {
-    if (!componentTypeMap[props.componentData?.type as ComponentKey]) return
-    getDataByType(props.componentData?.type as ComponentKey)
+  async () => {
+    const type = props.componentData?.type as ComponentKey
+    if (!componentTypeMap[type]) return
+    const data = await loadData(type)
+    items.value = data.data
+    console.log(data.data, '[Data]')
   },
 )
+
 onMounted(() => {})
 </script>
 
 <style scoped>
-/* Additional custom styles if needed */
+/* Ensure smooth scrolling and prevent zoom issues */
+.modal-content {
+  overscroll-behavior: contain;
+}
+
+/* Custom scrollbar styling for better UX */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
 </style>

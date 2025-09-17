@@ -183,40 +183,9 @@ import ContextMenu from './ContextMenu.vue'
 import GroupContainer from './GroupContainer.vue'
 import ComponentInfoModal from './ComponentInfoModal.vue'
 import { SaveLoadManager, type DiagramConfiguration } from '../utils/saveLoad'
+import type { ComponentData, ComponentGroup, DroppedComponent } from '@/types/component'
 
-interface DroppedComponent<T = any> {
-  id: number
-  type: string
-  x: number
-  y: number
-  width: number
-  data?: T | null
-  height: number
-  direction?: 'left' | 'right'
-  groupId?: number | null
-}
-
-interface ComponentGroup {
-  id: number
-  components: number[] // Array of component IDs
-  groups?: number[] // Array of nested group IDs (for group nesting)
-  x: number
-  y: number
-  width: number
-  height: number
-  parentGroupId?: number | null // ID of parent group if this is nested
-}
-
-interface ModalComponentData {
-  id: string
-  type: string
-  x: number
-  y: number
-  width: number
-  height: number
-  direction?: string
-  groupId?: string
-}
+interface ModalComponentData extends ComponentData {}
 
 const emit = defineEmits<{
   'scale-change': [scale: number]
@@ -854,10 +823,7 @@ const duplicateSuperGroup = (superGroup: ComponentGroup) => {
   // Create mapping for all nested groups first
   if (superGroup.groups) {
     superGroup.groups.forEach((nestedGroupId) => {
-      const newNestedGroupId =
-        Date.now() +
-        Math.random() +
-        nestedGroupId
+      const newNestedGroupId = Date.now() + Math.random() + nestedGroupId
       groupIdMap.set(nestedGroupId, newNestedGroupId)
     })
   }
@@ -873,10 +839,7 @@ const duplicateSuperGroup = (superGroup: ComponentGroup) => {
         // Duplicate the nested group's components
         const componentIdMap = new Map<number, number>()
         originalNestedGroup.components.forEach((oldId) => {
-          const newId =
-            Date.now() +
-            Math.random() +
-            oldId
+          const newId = Date.now() + Math.random() + oldId
           componentIdMap.set(oldId, newId)
         })
 
@@ -1420,28 +1383,21 @@ const closeContextMenu = () => {
 // Component info modal functions
 const openComponentModal = (component: DroppedComponent) => {
   // Convert component ID from number to string for modal
+  console.log(component, '[component]')
+
   const componentData = {
     ...component,
-    id: component.id.toString(),
+    id: component.id,
     groupId: component.groupId?.toString() || undefined,
   }
 
   componentModal.value.componentData = componentData
 
   // Generate mock device data if component is a device
-  if (component.type === 'device') {
-    componentModal.value.deviceData = {
-      temperature: Math.round((Math.random() * 10 + 20) * 10) / 10, // 20-30°C
-      humidity: Math.round((Math.random() * 40 + 40) * 10) / 10, // 40-80%
-      pressure: Math.round((Math.random() * 50 + 1000) * 100) / 100, // 1000-1050 hPa
-      voltage: Math.round((Math.random() * 2 + 11) * 10) / 10, // 11-13V
-      current: Math.round((Math.random() * 2 + 1) * 10) / 10, // 1-3A
-      power: Math.round((Math.random() * 20 + 20) * 10) / 10, // 20-40W
-      status: Math.random() > 0.8 ? 'OFFLINE' : ('ONLINE' as 'ONLINE' | 'OFFLINE' | 'ERROR'),
-    }
-  } else {
-    componentModal.value.deviceData = null
-  }
+  // if (component.type === 'device') {
+  // } else {
+  //   componentModal.value.deviceData = null
+  // }
 
   componentModal.value.visible = true
 }
@@ -1492,7 +1448,7 @@ const handleDuplicateComponent = () => {
       width: originalComponent.width,
       height: originalComponent.height,
       direction: originalComponent.direction, // Copy direction if exists
-      data : originalComponent.data
+      data: originalComponent.data,
     }
 
     // Snap the offset position to grid

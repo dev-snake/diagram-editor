@@ -1,7 +1,7 @@
 <template>
   <div class="h-12 bg-gray-50 border-b border-gray-300 flex items-center px-4 justify-between">
     <div class="flex items-center space-x-4">
-      <h1 class="text-lg font-semibold text-gray-800">Diagram Editor</h1>
+      <!-- <h1 class="text-lg font-semibold text-gray-800">Diagram Editor</h1> -->
       <div class="text-sm text-gray-600">Zoom: {{ Math.round(scale * 100) }}%</div>
     </div>
 

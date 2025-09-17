@@ -51,10 +51,17 @@ import Device from './device/Device.vue'
 import WaterPipe from './WaterPipe/WaterPipe.vue'
 import SimplePipe from './SimplePipe/SimplePipe.vue'
 import GridSquare from './GridSquare/GridSquare.vue'
+import type { ComponentKey } from '@/types/component'
 
 const searchQuery = ref('')
 
-const processObjects = [
+interface ProcessObject {
+  type: ComponentKey
+  name: string
+  component: any
+}
+
+const processObjects: ProcessObject[] = [
   { type: 'watertank', name: 'waterTank', component: WaterTank },
   { type: 'waterpumb', name: 'waterpumb', component: WaterPump },
   { type: 'gatewave', name: 'gatewave', component: GateWave },

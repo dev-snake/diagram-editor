@@ -164,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { SaveLoadManager, type DiagramConfiguration } from '../utils/saveLoad'
 
 const props = defineProps<{

@@ -204,6 +204,7 @@
 </template>
 
 <script setup lang="ts">
+import type { DroppedComponent } from '@/types/component'
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 
 interface Position {
@@ -218,17 +219,6 @@ interface ComponentGroup {
   y: number
   width: number
   height: number
-}
-
-interface DroppedComponent {
-  id: number
-  type: string
-  x: number
-  y: number
-  width: number
-  height: number
-  direction?: 'left' | 'right'
-  groupId?: number | null
 }
 
 const props = defineProps<{

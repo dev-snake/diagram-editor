@@ -48,29 +48,8 @@
 </template>
 
 <script setup lang="ts">
+import type { ComponentGroup, DroppedComponent } from '@/types/component'
 import { computed } from 'vue'
-
-interface ComponentGroup {
-  id: number
-  components: number[]
-  groups?: number[] // Array of nested group IDs
-  x: number
-  y: number
-  width: number
-  height: number
-  parentGroupId?: number | null
-}
-
-interface DroppedComponent {
-  id: number
-  type: string
-  x: number
-  y: number
-  width: number
-  height: number
-  direction?: 'left' | 'right'
-  groupId?: number | null
-}
 
 interface Props {
   group: ComponentGroup
