@@ -20,8 +20,6 @@
     <div class="flex-1 p-3 space-y-3 overflow-y-auto">
       <!-- Process Objects -->
       <div class="space-y-2" v-if="filteredProcessObjects.length > 0">
-        <h3 class="text-sm font-medium text-gray-600 uppercase tracking-wide">Process Objects</h3>
-
         <div
           v-for="component in filteredProcessObjects"
           :key="component.type"

@@ -177,19 +177,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, readonly } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, readonly, provide, reactive } from 'vue'
 import ComponentShape from './ComponentShape.vue'
 import ContextMenu from './ContextMenu.vue'
 import GroupContainer from './GroupContainer.vue'
 import ComponentInfoModal from './ComponentInfoModal.vue'
 import { SaveLoadManager, type DiagramConfiguration } from '../utils/saveLoad'
 
-interface DroppedComponent {
+interface DroppedComponent<T = any> {
   id: number
   type: string
   x: number
   y: number
   width: number
+  data?: T | null
   height: number
   direction?: 'left' | 'right'
   groupId?: number | null
@@ -247,6 +248,82 @@ const selectedGroup = ref<ComponentGroup | null>(null)
 const selectedGroupIds = ref<number[]>([]) // For multiple group selection
 const isDraggingComponent = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
+
+// Create reactive state object for provide
+const canvasState = reactive({
+  components: components.value,
+  groups: groups.value,
+  selectedComponents: selectedComponents.value,
+  selectedComponent: selectedComponent.value,
+  selectedGroup: selectedGroup.value,
+  selectedGroupIds: selectedGroupIds.value,
+  isDraggingComponent: isDraggingComponent.value,
+  dragOffset: dragOffset.value,
+})
+
+// Provide the canvas state to child components
+provide('canvasState', canvasState)
+
+// Watch for changes and update the provided state
+watch(
+  components,
+  (newVal) => {
+    canvasState.components = newVal
+  },
+  { deep: true },
+)
+
+watch(
+  groups,
+  (newVal) => {
+    canvasState.groups = newVal
+  },
+  { deep: true },
+)
+
+watch(
+  selectedComponents,
+  (newVal) => {
+    canvasState.selectedComponents = newVal
+  },
+  { deep: true },
+)
+
+watch(
+  selectedComponent,
+  (newVal) => {
+    canvasState.selectedComponent = newVal
+  },
+  { deep: true },
+)
+
+watch(
+  selectedGroup,
+  (newVal) => {
+    canvasState.selectedGroup = newVal
+  },
+  { deep: true },
+)
+
+watch(
+  selectedGroupIds,
+  (newVal) => {
+    canvasState.selectedGroupIds = newVal
+  },
+  { deep: true },
+)
+
+watch(isDraggingComponent, (newVal) => {
+  canvasState.isDraggingComponent = newVal
+})
+
+watch(
+  dragOffset,
+  (newVal) => {
+    canvasState.dragOffset = newVal
+  },
+  { deep: true },
+)
 
 // Multi-selection state
 const isMultiSelecting = ref(false)
@@ -467,7 +544,7 @@ const handleDrop = (event: DragEvent) => {
 
       // Default dimensions based on component type (snap to grid)
       const getDefaultDimensions = (type: string) => {
-        console.log('[Type]: ', type)
+        // console.log('[Type]: ', type)
 
         switch (type) {
           case 'device':
@@ -499,10 +576,13 @@ const handleDrop = (event: DragEvent) => {
         y: snappedY,
         width: defaultDimensions.width,
         height: defaultDimensions.height,
+        data: null,
       }
 
+      console.log('🚀 Adding new component:', newComponent)
       components.value.push(newComponent)
       selectedComponent.value = newComponent
+      console.log('✅ Component added successfully. Total components:', components.value.length)
     }
   } catch (error) {
     console.error('Failed to parse drop data:', error)
@@ -698,12 +778,12 @@ const duplicateGroup = (group: ComponentGroup) => {
 
 const duplicateRegularGroup = (group: ComponentGroup) => {
   // Generate new IDs
-  const newGroupId = Date.now() + Math.random()
+  const newGroupId = Date.now()
   const componentIdMap = new Map<number, number>()
 
   // Create mapping of old IDs to new IDs
   group.components.forEach((oldId) => {
-    const newId = Date.now() + Math.random() + oldId
+    const newId = Date.now() + oldId
     componentIdMap.set(oldId, newId)
   })
 
@@ -768,7 +848,7 @@ const duplicateSuperGroup = (superGroup: ComponentGroup) => {
 
   // Map to store old group ID -> new group ID mapping
   const groupIdMap = new Map<number, number>()
-  const newSuperGroupId = Date.now() + Math.random()
+  const newSuperGroupId = Date.now()
   groupIdMap.set(superGroup.id, newSuperGroupId)
 
   // Create mapping for all nested groups first
@@ -871,7 +951,7 @@ const createSuperGroup = () => {
 
   if (selectedGroups.length < 2) return
 
-  const superGroupId = Date.now() + Math.random()
+  const superGroupId = Date.now()
 
   // Calculate bounds that encompass all selected groups
   let minX = Infinity,
@@ -1368,24 +1448,34 @@ const closeComponentModal = () => {
 
 const handleDeleteComponent = () => {
   if (contextMenu.value.component) {
-    console.log(contextMenu.value.component, '[contextMenu.value.component]')
+    console.log('🗑️ Deleting component:', contextMenu.value.component)
     const index = components.value.findIndex((comp) => comp.id === contextMenu.value.component!.id)
     if (index !== -1) {
+      const deletedComponent = components.value[index]
       components.value.splice(index, 1)
+      console.log('✅ Component deleted successfully:', deletedComponent)
+      console.log('📊 Remaining components count:', components.value.length)
+
       // Clear selection if the deleted component was selected
       if (selectedComponent.value?.id === contextMenu.value.component.id) {
         selectedComponent.value = null
+        console.log('🔄 Cleared selection due to component deletion')
       }
+    } else {
+      console.log('❌ Component not found for deletion')
     }
+  } else {
+    console.log('⚠️ No component selected for deletion')
   }
 }
 
 const handleDuplicateComponent = () => {
   if (contextMenu.value.component) {
     const originalComponent = contextMenu.value.component
+    console.log('📋 Duplicating component:', originalComponent)
 
     // Generate a new unique ID
-    const newId = Date.now() + Math.random()
+    const newId = Date.now()
 
     // Create a duplicate with offset position
     const duplicateComponent: DroppedComponent = {
@@ -1396,14 +1486,18 @@ const handleDuplicateComponent = () => {
       width: originalComponent.width,
       height: originalComponent.height,
       direction: originalComponent.direction, // Copy direction if exists
+      data: originalComponent.data,
     }
 
     // Snap the offset position to grid
     duplicateComponent.x = Math.round(duplicateComponent.x / gridSize) * gridSize
     duplicateComponent.y = Math.round(duplicateComponent.y / gridSize) * gridSize
 
+    console.log('✨ Created duplicate component:', duplicateComponent)
+
     // Add to components array
     components.value.push(duplicateComponent)
+    console.log('✅ Duplicate added successfully. Total components:', components.value.length)
 
     // Select the duplicate
     selectedComponent.value = duplicateComponent

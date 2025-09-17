@@ -101,7 +101,6 @@
         </div>
       </div>
 
-
       <!-- Ventilation Grilles -->
       <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
         <div
@@ -115,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, inject } from 'vue'
 
 interface DeviceData {
   temperature: number
@@ -172,7 +171,6 @@ const internalData = ref<DeviceData>({
   pumpActive: false,
   ...props.data,
 })
-
 const screwPositions = ['top-2 left-2', 'top-2 right-2', 'bottom-2 left-2', 'bottom-2 right-2']
 
 // Update current time
@@ -230,15 +228,6 @@ const updateData = () => {
   if (mergedData.value.alarmActive) {
     emit('alert', 'alarm', 'System alarm activated')
   }
-}
-
-const resetDevice = () => {
-  internalData.value.alarmActive = false
-  emit('statusChange', 'RESET')
-}
-
-const configDevice = () => {
-  emit('statusChange', 'CONFIG')
 }
 
 onMounted(() => {

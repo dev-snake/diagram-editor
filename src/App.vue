@@ -42,12 +42,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import Canvas from './components/Canvas.vue'
 import Toolbar from './components/Toolbar.vue'
 import SaveLoadModal from './components/SaveLoadModal.vue'
 import type { DiagramConfiguration } from './utils/saveLoad'
+
 
 const canvasRef = ref()
 const canvasScale = ref(1)
