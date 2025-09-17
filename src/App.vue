@@ -49,7 +49,6 @@ import Toolbar from './components/Toolbar.vue'
 import SaveLoadModal from './components/SaveLoadModal.vue'
 import type { DiagramConfiguration } from './utils/saveLoad'
 
-
 const canvasRef = ref()
 const canvasScale = ref(1)
 
@@ -124,23 +123,6 @@ const handleSelectAllAndGroup = () => {
     canvasRef.value.selectAllComponents()
   }
 }
-
-// const getSelectionInfo = () => {
-//   if (!canvasRef.value) return ''
-
-//   const selectedComponents = canvasRef.value.selectedComponents
-//   const selectedGroup = canvasRef.value.selectedGroup
-
-//   if (selectedGroup) {
-//     return `Group selected (${selectedGroup.components.length} items)`
-//   }
-
-//   if (selectedComponents?.length > 0) {
-//     return `${selectedComponents.length} item${selectedComponents.length > 1 ? 's' : ''} selected`
-//   }
-
-//   return ''
-// }
 
 // Save/Load handlers
 const handleSaveConfig = () => {

@@ -854,7 +854,10 @@ const duplicateSuperGroup = (superGroup: ComponentGroup) => {
   // Create mapping for all nested groups first
   if (superGroup.groups) {
     superGroup.groups.forEach((nestedGroupId) => {
-      const newNestedGroupId = Date.now() + Math.random() + nestedGroupId
+      const newNestedGroupId =
+        Date.now() +
+        Math.random() +
+        nestedGroupId
       groupIdMap.set(nestedGroupId, newNestedGroupId)
     })
   }
@@ -870,7 +873,10 @@ const duplicateSuperGroup = (superGroup: ComponentGroup) => {
         // Duplicate the nested group's components
         const componentIdMap = new Map<number, number>()
         originalNestedGroup.components.forEach((oldId) => {
-          const newId = Date.now() + Math.random() + oldId
+          const newId =
+            Date.now() +
+            Math.random() +
+            oldId
           componentIdMap.set(oldId, newId)
         })
 
@@ -1486,7 +1492,7 @@ const handleDuplicateComponent = () => {
       width: originalComponent.width,
       height: originalComponent.height,
       direction: originalComponent.direction, // Copy direction if exists
-      data: originalComponent.data,
+      data : originalComponent.data
     }
 
     // Snap the offset position to grid

@@ -27,8 +27,11 @@
       <div class="px-6 py-4">
         <!-- Component Properties -->
         <div class="space-y-4">
-          <!-- Device-specific data (for Device component) -->
-          <div v-if="componentData?.type === 'device'" class="border-t pt-4"></div>
+          <!-- items  -->
+          <!--  -->
+          <div>
+            <span>{{ componentData?.type }}</span>
+          </div>
         </div>
       </div>
 
@@ -46,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 
 interface ComponentData {
   id: string
@@ -74,18 +77,29 @@ interface Props {
   componentData?: ComponentData | null
   deviceData?: DeviceData | null
 }
+type ComponentKey =
+  | 'watertank'
+  | 'waterpumb'
+  | 'gatewave'
+  | 'pressure-gauge'
+  | 'water-level-sensor'
+  | 'device'
+  | 'water-pipe'
+  | 'pipe'
+  | 'grid-square'
 
 const props = withDefaults(defineProps<Props>(), {
   isVisible: false,
   componentData: null,
   deviceData: null,
 })
+console.log(props, 'props')
 
 const emit = defineEmits<{
   close: []
 }>()
 
-const componentTypeMap: Record<string, string> = {
+const componentTypeMap: Record<ComponentKey, string> = {
   watertank: 'Bể chứa nước',
   waterpumb: 'Máy bơm nước',
   gatewave: 'Van cổng',
@@ -99,7 +113,7 @@ const componentTypeMap: Record<string, string> = {
 
 const componentTypeDisplay = computed(() => {
   return (
-    componentTypeMap[props.componentData?.type || ''] ||
+    componentTypeMap[props.componentData?.type as ComponentKey] ||
     props.componentData?.type ||
     'Không xác định'
   )
@@ -114,6 +128,58 @@ const handleBackdropClick = (event: MouseEvent) => {
     emit('close')
   }
 }
+const getApiByType = async (type: ComponentKey) => {
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/todos/1')
+    console.log(response)
+
+    return response
+  } catch (error) {
+    console.log(error)
+  }
+}
+const getDataByType = async (type: ComponentKey) => {
+  let data = null
+  switch (type) {
+    case 'watertank':
+      data = getApiByType(type)
+      break
+    case 'waterpumb':
+      data = getApiByType(type)
+      break
+    case 'gatewave':
+      data = getApiByType(type)
+      break
+    case 'pressure-gauge':
+      data = getApiByType(type)
+      break
+    case 'water-level-sensor':
+      data = getApiByType(type)
+      break
+    case 'device':
+      data = getApiByType(type)
+      break
+    case 'water-pipe':
+      data = getApiByType(type)
+      break
+    case 'pipe':
+      data = getApiByType(type)
+      break
+    case 'grid-square':
+      data = getApiByType(type)
+      break
+    default:
+      break
+  }
+}
+watch(
+  () => props.isVisible,
+  () => {
+    if (!componentTypeMap[props.componentData?.type as ComponentKey]) return
+    getDataByType(props.componentData?.type as ComponentKey)
+  },
+)
+onMounted(() => {})
 </script>
 
 <style scoped>
