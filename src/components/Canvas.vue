@@ -3,7 +3,6 @@
     ref="canvasContainer"
     class="relative w-full h-full overflow-hidden bg-white focus:outline-none"
     tabindex="0"
-    style="will-change: transform; transform: translateZ(0)"
     @wheel="handleWheel"
     @mousedown="handleMouseDown"
     @mousemove="handleMouseMove"
@@ -1369,6 +1368,7 @@ const closeComponentModal = () => {
 
 const handleDeleteComponent = () => {
   if (contextMenu.value.component) {
+    console.log(contextMenu.value.component, '[contextMenu.value.component]')
     const index = components.value.findIndex((comp) => comp.id === contextMenu.value.component!.id)
     if (index !== -1) {
       components.value.splice(index, 1)
