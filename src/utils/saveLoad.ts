@@ -1,7 +1,7 @@
 // saveLoad.ts - Utility for saving and loading diagram configurations
 
 export interface SavedComponent {
-  id: number
+  component_id: number
   type: string
   x: number
   y: number

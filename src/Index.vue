@@ -47,7 +47,6 @@ import Sidebar from './components/Sidebar.vue'
 import Canvas from './components/Canvas.vue'
 import Toolbar from './components/Toolbar.vue'
 import SaveLoadModal from './components/SaveLoadModal.vue'
-import UserInfo from './components/UserInfo.vue'
 import type { DiagramConfiguration } from './utils/saveLoad'
 
 const canvasRef = ref()

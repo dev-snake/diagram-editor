@@ -27,7 +27,7 @@
       <!-- Dropped Components -->
       <div
         v-for="component in components"
-        :key="component.id"
+        :key="component.component_id"
         data-canvas-component
         :style="{
           position: 'absolute',
@@ -39,9 +39,9 @@
         }"
         :class="{
           'ring-2 ring-blue-400 ring-opacity-50':
-            isResizing && selectedComponent?.id === component.id,
+            isResizing && selectedComponent?.component_id === component.component_id,
           'ring-2 ring-green-400 ring-opacity-50': selectedComponents.some(
-            (c) => c.id === component.id,
+            (c) => c.component_id === component.component_id,
           ),
           'ring-2 ring-purple-400 ring-opacity-30':
             component.groupId && selectedComponent?.groupId === component.groupId,
@@ -55,14 +55,14 @@
           :type="component.type"
           :width="component.width"
           :height="component.height"
-          :selected="selectedComponent?.id === component.id"
+          :selected="selectedComponent?.component_id === component.component_id"
           :direction="component.direction"
           @click="selectComponent(component)"
         />
 
         <!-- Resize handles for selected component (only if not in group) -->
         <div
-          v-if="selectedComponent?.id === component.id && !component.groupId"
+          v-if="selectedComponent?.component_id === component.component_id && !component.groupId"
           class="absolute inset-0 pointer-events-none"
         >
           <!-- Corner handles -->
@@ -111,7 +111,7 @@
 
           <!-- Dimension display when resizing -->
           <div
-            v-if="isResizing && selectedComponent?.id === component.id"
+            v-if="isResizing && selectedComponent?.component_id === component.component_id"
             class="absolute bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded pointer-events-none"
             style="top: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap"
           >
@@ -545,7 +545,7 @@ const handleDrop = (event: DragEvent) => {
       const defaultDimensions = getDefaultDimensions(componentData.type)
 
       const newComponent: DroppedComponent = {
-        id: componentData.id,
+        component_id: componentData.id,
         type: componentData.type,
         x: snappedX,
         y: snappedY,
@@ -582,7 +582,9 @@ const handleComponentClick = (event: MouseEvent, component: DroppedComponent) =>
 
   if (event.ctrlKey || event.metaKey) {
     // Multi-select mode
-    const index = selectedComponents.value.findIndex((c) => c.id === component.id)
+    const index = selectedComponents.value.findIndex(
+      (c) => c.component_id === component.component_id,
+    )
     if (index >= 0) {
       // Remove from selection
       selectedComponents.value.splice(index, 1)
@@ -668,7 +670,7 @@ const createGroup = () => {
 
   const newGroup: ComponentGroup = {
     id: groupId,
-    components: selectedComponents.value.map((c) => c.id),
+    components: selectedComponents.value.map((c) => c.component_id),
     groups: [], // Initialize empty array for nested groups
     x: minX,
     y: minY,
@@ -699,7 +701,7 @@ const ungroupComponents = (group: ComponentGroup) => {
     // Handle regular group ungrouping
     // Remove group ID from components
     group.components.forEach((componentId) => {
-      const component = components.value.find((c) => c.id === componentId)
+      const component = components.value.find((c) => c.component_id === componentId)
       if (component) {
         component.groupId = null
       }
@@ -730,7 +732,7 @@ const deleteGroup = (group: ComponentGroup) => {
 
   // Delete all components in the group
   group.components.forEach((componentId) => {
-    const componentIndex = components.value.findIndex((c) => c.id === componentId)
+    const componentIndex = components.value.findIndex((c) => c.component_id === componentId)
     if (componentIndex >= 0) {
       components.value.splice(componentIndex, 1)
     }
@@ -769,11 +771,11 @@ const duplicateRegularGroup = (group: ComponentGroup) => {
   // Duplicate all components in the group
   const duplicatedComponents: DroppedComponent[] = []
   group.components.forEach((componentId) => {
-    const originalComponent = components.value.find((c) => c.id === componentId)
+    const originalComponent = components.value.find((c) => c.component_id === componentId)
     if (originalComponent) {
       const newId = componentIdMap.get(componentId)!
       const duplicatedComponent: DroppedComponent = {
-        id: newId,
+        component_id: newId,
         type: originalComponent.type,
         x: originalComponent.x + offsetX,
         y: originalComponent.y + offsetY,
@@ -851,11 +853,11 @@ const duplicateSuperGroup = (superGroup: ComponentGroup) => {
 
         // Duplicate components
         originalNestedGroup.components.forEach((componentId) => {
-          const originalComponent = components.value.find((c) => c.id === componentId)
+          const originalComponent = components.value.find((c) => c.component_id === componentId)
           if (originalComponent) {
             const newComponentId = componentIdMap.get(componentId)!
             const duplicatedComponent: DroppedComponent = {
-              id: newComponentId,
+              component_id: newComponentId,
               type: originalComponent.type,
               x: originalComponent.x + offsetX,
               y: originalComponent.y + offsetY,
@@ -1000,7 +1002,7 @@ const moveGroupRecursive = (group: ComponentGroup, deltaX: number, deltaY: numbe
 
   // Move all components in the group
   group.components.forEach((componentId) => {
-    const component = components.value.find((c) => c.id === componentId)
+    const component = components.value.find((c) => c.component_id === componentId)
     if (component) {
       component.x += deltaX
       component.y += deltaY
@@ -1020,7 +1022,7 @@ const moveGroupRecursive = (group: ComponentGroup, deltaX: number, deltaY: numbe
 
 // Update group bounds based on its components
 const updateGroupBounds = (group: ComponentGroup) => {
-  const groupComponents = components.value.filter((c) => group.components.includes(c.id))
+  const groupComponents = components.value.filter((c) => group.components.includes(c.component_id))
 
   if (groupComponents.length === 0) return
 
@@ -1393,7 +1395,7 @@ const openComponentModal = (component: DroppedComponent) => {
 
   const componentData = {
     ...component,
-    id: component.id,
+    id: component.component_id,
     groupId: component.groupId?.toString() || undefined,
   }
 
@@ -1417,7 +1419,9 @@ const closeComponentModal = () => {
 const handleDeleteComponent = () => {
   if (contextMenu.value.component) {
     console.log('🗑️ Deleting component:', contextMenu.value.component)
-    const index = components.value.findIndex((comp) => comp.id === contextMenu.value.component!.id)
+    const index = components.value.findIndex(
+      (comp) => comp.component_id === contextMenu.value.component!.component_id,
+    )
     if (index !== -1) {
       const deletedComponent = components.value[index]
       components.value.splice(index, 1)
@@ -1425,7 +1429,7 @@ const handleDeleteComponent = () => {
       console.log('📊 Remaining components count:', components.value.length)
 
       // Clear selection if the deleted component was selected
-      if (selectedComponent.value?.id === contextMenu.value.component.id) {
+      if (selectedComponent.value?.component_id === contextMenu.value.component.component_id) {
         selectedComponent.value = null
         console.log('🔄 Cleared selection due to component deletion')
       }
@@ -1447,7 +1451,7 @@ const handleDuplicateComponent = () => {
 
     // Create a duplicate with offset position
     const duplicateComponent: DroppedComponent = {
-      id: newId,
+      component_id: newId,
       type: originalComponent.type,
       x: originalComponent.x + 20, // Offset by 20px
       y: originalComponent.y + 20, // Offset by 20px
@@ -1474,13 +1478,15 @@ const handleDuplicateComponent = () => {
 
 const handleChangeDirection = (direction: 'left' | 'right') => {
   if (contextMenu.value.component) {
-    const index = components.value.findIndex((comp) => comp.id === contextMenu.value.component!.id)
+    const index = components.value.findIndex(
+      (comp) => comp.component_id === contextMenu.value.component!.component_id,
+    )
     if (index !== -1) {
       components.value[index].direction = direction
 
       // Update selectedComponent if it's the same component
-      if (selectedComponent.value?.id === contextMenu.value.component.id) {
-        selectedComponent.value.direction = direction
+      if (selectedComponent.value?.component_id === contextMenu.value.component.component_id) {
+        selectedComponent.value!.direction = direction
       }
     }
   }
@@ -1567,7 +1573,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
       deleteGroup(selectedGroup.value)
     } else if (selectedComponents.value.length > 0) {
       selectedComponents.value.forEach((component) => {
-        const index = components.value.findIndex((c) => c.id === component.id)
+        const index = components.value.findIndex((c) => c.component_id === component.component_id)
         if (index >= 0) {
           components.value.splice(index, 1)
         }

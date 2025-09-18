@@ -9,24 +9,24 @@ export type ComponentKey =
   | 'pipe'
   | 'grid-square'
   | 'pressure-meter'
-export interface ComponentData {
-  id: number
+// Base interface chứa các properties chung
+export interface BaseComponent {
+  component_id: number
   type: string
   x: number
   y: number
   width: number
   height: number
+}
+
+// Interface cho component data cơ bản
+export interface ComponentData extends BaseComponent {
   direction?: string
   groupId?: string
 }
 
-export interface DroppedComponent<T = any> {
-  id: number
-  type: string
-  x: number
-  y: number
-  width: number
-  height: number
+// Interface cho dropped component với type safety tốt hơn
+export interface DroppedComponent<T = any> extends BaseComponent {
   direction?: 'left' | 'right'
   groupId?: number | null
   data?: T | null

@@ -60,6 +60,7 @@
 </template>
 
 <script setup lang="ts">
+
 import type { ComponentData, ComponentKey } from '@/types/component'
 import { computed, onMounted, watch, inject, ref } from 'vue'
 
@@ -113,12 +114,12 @@ const handleBackdropClick = (event: MouseEvent) => {
 // Map type -> endpoint
 const baseURL = 'http://localhost:8998/v1'
 const apiMap: Record<ComponentKey, string> = {
-  watertank: 'https://api.example.com/watertank',
+  watertank: `${baseURL}/device?keyword&type=DATALOGGER&sort=DESC&perPage=10&page=1&roleId`,
   waterpumb: 'https://api.example.com/waterpumb',
   gatewave: 'https://api.example.com/gatewave',
   'pressure-gauge': 'https://api.example.com/pressure-gauge',
   'water-level-sensor': 'https://api.example.com/water-level-sensor',
-  device: `${baseURL}/device`,
+  device: `${baseURL}/device?type=DMA&sort=DESC&perPage=10&page=1&roleId`,
   'water-pipe': 'https://api.example.com/water-pipe',
   pipe: 'https://api.example.com/pipe',
   'grid-square': 'https://api.example.com/grid-square',
@@ -127,26 +128,20 @@ const apiMap: Record<ComponentKey, string> = {
 
 const fetchData = async (type: ComponentKey) => {
   const url = apiMap[type]
-  if (!url) {
-    console.warn(`❌ No endpoint for type: ${type}`)
-    return null
-  }
+  if (!url) return (console.warn(`❌ No endpoint for type: ${type}`), null)
+
+  const token = document.cookie.match(/(^| )accessToken=([^;]+)/)?.[2]
 
   try {
-    const accessToken =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZkYjlhZTk5LThmNDAtNGY4YS1iNTVlLTJjODQzOTdhNDVhMyIsImVtYWlsIjoic3VwZXJhZG1pbnNhaWdvbnZhbHZlQGdtYWlsLmNvbSIsInRva2VuSWQiOiI2YzNmOTYwZS05ZmQ3LTQ0NTUtYjhmZC1lYzA3MTQwMjhmZDEiLCJpYXQiOjE3NTgwOTYxODcsImV4cCI6MTAwMTc1ODA5NjE4Nn0._621odsO-7BMC-iRM13Iqjl-SZZisLeq-I6sxVpZZ-4'
-    const options = {
+    const res = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        ...(token && { Authorization: `Bearer ${decodeURIComponent(token)}` }),
       },
-    }
-
-    const res = await fetch(url, options)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    return await res.json()
-  } catch (err) {
-    console.error('❌ Fetch error:', err)
+    })
+    return res.ok ? res.json() : null
+  } catch (e) {
+    console.error('❌ Fetch error:', e)
     return null
   }
 }
@@ -159,8 +154,7 @@ watch(
     const type = props.componentData?.type as ComponentKey
     if (!componentTypeMap[type]) return
     const data = await loadData(type)
-    items.value = data.data
-    console.log(data.data, '[Data]')
+    console.log(data)
   },
 )
 

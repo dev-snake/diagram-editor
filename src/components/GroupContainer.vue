@@ -66,7 +66,9 @@ const emit = defineEmits<{
 }>()
 
 const groupComponents = computed(() => {
-  return props.components.filter((c: DroppedComponent) => props.group.components.includes(c.id))
+  return props.components.filter((c: DroppedComponent) =>
+    props.group.components.includes(c.component_id),
+  )
 })
 
 const totalItemsCount = computed(() => {
