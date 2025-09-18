@@ -8,6 +8,7 @@ export type ComponentKey =
   | 'water-pipe'
   | 'pipe'
   | 'grid-square'
+  | 'pressure-meter'
 export interface ComponentData {
   id: number
   type: string
@@ -39,4 +40,39 @@ export interface ComponentGroup {
   width: number
   height: number
   parentGroupId?: number | null // ID of parent group if this is nested
+}
+
+// Auth related types
+export interface UserData {
+  id: string
+  avatar: string
+  email: string
+  role: string
+  permissions: string
+  roleId: string
+  isRoleDevice: boolean
+  username: string
+  superUser: boolean
+  manageSupers: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UserAbilityRules {
+  id: string
+  name: string
+  permissions: string
+  description: string
+  isDefault: boolean
+  isRoleDevice: boolean
+  createdBy: string
+  updatedBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AuthResponse {
+  accessToken: string
+  userData: UserData
+  userAbilityRules: UserAbilityRules
 }

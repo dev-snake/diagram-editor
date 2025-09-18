@@ -183,7 +183,12 @@ import ContextMenu from './ContextMenu.vue'
 import GroupContainer from './GroupContainer.vue'
 import ComponentInfoModal from './ComponentInfoModal.vue'
 import { SaveLoadManager, type DiagramConfiguration } from '../utils/saveLoad'
-import type { ComponentData, ComponentGroup, DroppedComponent } from '@/types/component'
+import type {
+  ComponentData,
+  ComponentGroup,
+  ComponentKey,
+  DroppedComponent,
+} from '@/types/component'
 
 interface ModalComponentData extends ComponentData {}
 
@@ -512,7 +517,7 @@ const handleDrop = (event: DragEvent) => {
       // Height: 22 ô grid = 22 × 20px = 440px
 
       // Default dimensions based on component type (snap to grid)
-      const getDefaultDimensions = (type: string) => {
+      const getDefaultDimensions = (type: ComponentKey) => {
         // console.log('[Type]: ', type)
 
         switch (type) {
@@ -530,7 +535,8 @@ const handleDrop = (event: DragEvent) => {
             return { width: 340, height: 340 } // [17x17]:[w x h]
           case 'watertank':
             return { width: 500, height: 640 } // [25x17]:[w x h]
-
+          case 'pressure-meter':
+            return { width: 540, height: 280 }
           default:
             return { width: 60, height: 60 }
         }

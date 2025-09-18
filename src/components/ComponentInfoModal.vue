@@ -90,6 +90,7 @@ const componentTypeMap: Record<ComponentKey, string> = {
   'water-pipe': 'Ống nước',
   pipe: 'Ống dẫn',
   'grid-square': 'Ô lưới',
+  'pressure-meter': 'Áp suất',
 }
 
 const componentTypeDisplay = computed(() => {
@@ -121,6 +122,7 @@ const apiMap: Record<ComponentKey, string> = {
   'water-pipe': 'https://api.example.com/water-pipe',
   pipe: 'https://api.example.com/pipe',
   'grid-square': 'https://api.example.com/grid-square',
+  'pressure-meter': 'https://api.example.com/grid-square',
 }
 
 const fetchData = async (type: ComponentKey) => {

@@ -52,6 +52,7 @@ import WaterPipe from './WaterPipe/WaterPipe.vue'
 import SimplePipe from './SimplePipe/SimplePipe.vue'
 import GridSquare from './GridSquare/GridSquare.vue'
 import type { ComponentKey } from '@/types/component'
+import Pressuremeter from './PressureMeter/Pressuremeter.vue'
 
 const searchQuery = ref('')
 
@@ -71,6 +72,7 @@ const processObjects: ProcessObject[] = [
   { type: 'water-pipe', name: 'water-pipe', component: WaterPipe },
   { type: 'pipe', name: 'pipe', component: SimplePipe },
   { type: 'grid-square', name: 'grid-square', component: GridSquare },
+  { type: 'pressure-meter', name: 'pressure-meter', component: Pressuremeter },
 ]
 
 const filteredProcessObjects = computed(() => {

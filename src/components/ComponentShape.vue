@@ -19,6 +19,7 @@
     />
     <SimplePipe v-else-if="type === 'pipe'" :width="width" :height="height" />
     <GridSquare v-else-if="type === 'grid-square'" :width="width" :height="height" />
+    <Pressuremeter v-else-if="type === 'pressure-meter'" :width="width" :height="height" />
 
     <div
       v-else
@@ -50,6 +51,7 @@ import Device from './device/Device.vue'
 import WaterPipe from './WaterPipe/WaterPipe.vue'
 import SimplePipe from './SimplePipe/SimplePipe.vue'
 import GridSquare from './GridSquare/GridSquare.vue'
+import Pressuremeter from './PressureMeter/Pressuremeter.vue'
 interface Props {
   type: string
   width: number
@@ -66,6 +68,7 @@ const scadaComponentTypes = [
   'gatewave',
   'pressure-gauge',
   'water-level-sensor',
+  'pressure-meter',
 ]
 
 const isSCADAComponent = computed(() => {
