@@ -49,7 +49,7 @@
                 v-for="i in items"
                 :key="i.id"
                 class="border border-gray-200 rounded-lg p-4 mb-4 hover:cursor-pointer"
-                @click="handleSelect(i.vgaData)"
+                @click="handleSelect(i.vgaData, i.id)"
               >
                 <div class="flex items-center justify-between mb-2">
                   <span class="font-medium text-gray-800">{{ i.displayName }}</span>
@@ -223,7 +223,7 @@ const loadMoreData = async () => {
     await loadData(type, false) // false means append to existing data
   }
 }
-const handleSelect = (data: any) => {
+const handleSelect = (data: any, deviceId: string) => {
   console.log(data)
   if (!canvasState) return
   switch (props.componentData?.type as ComponentKey) {
@@ -243,10 +243,10 @@ const handleSelect = (data: any) => {
       if (idx !== -1) {
         canvasState.components[idx] = {
           ...canvasState.components[idx],
-          data,
+          data: { ...data, deviceId },
         }
       }
-      // console.log(canvasState)
+      console.log(canvasState , "selected")
       break
     default:
       break
