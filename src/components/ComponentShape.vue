@@ -33,10 +33,7 @@
       <span class="text-xs text-gray-600 font-medium">?</span>
     </div>
 
-    <div
-      v-if="selected && isSCADAComponent"
-      class="absolute inset-0 ring-2 ring-blue-400 ring-offset-2 rounded-sm pointer-events-none"
-    ></div>
+    <div v-if="selected && isSCADAComponent" class="absolute rounded-sm pointer-events-none"></div>
   </div>
 </template>
 
