@@ -1,5 +1,7 @@
 // saveLoad.ts - Utility for saving and loading diagram configurations
 
+import { useApi } from './useApi'
+
 export interface SavedComponent {
   component_id: number
   type: string
@@ -72,11 +74,22 @@ export class SaveLoadManager {
       // Save to localStorage
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filteredConfigs))
 
+      console.log('Configuration saved:', config)
+      this.savedb(config)
       return true
     } catch (error) {
       console.error('Failed to save configuration:', error)
       return false
     }
+  }
+  static async savedb(config: DiagramConfiguration) {
+    const { request } = useApi()
+    const data = await request.post('create', {
+      name: config.name,
+      description: config.description,
+      diagram: config,
+    })
+    console.log(data, 'data')
   }
 
   /**

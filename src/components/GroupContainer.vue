@@ -10,9 +10,10 @@
       zIndex: 5,
     }"
   >
-    <!-- Group border -->
+    <!-- Group border with expanded spacing -->
     <div
-      class="absolute inset-0 border-2 border-dashed rounded-lg pointer-events-none transition-colors"
+      class="absolute border-2 border-dashed rounded-lg pointer-events-none transition-colors"
+      style="top: -60px; left: -60px; right: -60px; bottom: -60px"
       :class="{
         'border-purple-400': !selected && !isNestedGroup && !isSuperGroup,
         'border-purple-600': selected && !isNestedGroup && !isSuperGroup,

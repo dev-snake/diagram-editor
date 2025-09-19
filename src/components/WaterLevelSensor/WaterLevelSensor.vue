@@ -7,29 +7,37 @@
       <!-- Main Sensor Housing with realistic metallic finish -->
       <div
         class="relative w-64 h-96 bg-gradient-to-b from-zinc-300 via-zinc-400 to-zinc-500 rounded-xl shadow-2xl"
-        style="box-shadow: 
-          0 20px 25px -5px rgba(0, 0, 0, 0.3),
-          0 10px 10px -5px rgba(0, 0, 0, 0.04),
-          inset 0 2px 4px rgba(255, 255, 255, 0.5),
-          inset 0 -2px 4px rgba(0, 0, 0, 0.2)"
+        style="
+          box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.3),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04),
+            inset 0 2px 4px rgba(255, 255, 255, 0.5),
+            inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+        "
       >
         <!-- Top Cap with realistic depth -->
         <div
           class="absolute -top-3 left-1/2 transform -translate-x-1/2 w-24 h-8 bg-gradient-to-b from-zinc-200 via-zinc-300 to-zinc-400 rounded-t-2xl"
-          style="box-shadow: 
-            0 -2px 4px rgba(0, 0, 0, 0.1),
-            inset 0 1px 2px rgba(255, 255, 255, 0.8)"
+          style="
+            box-shadow:
+              0 -2px 4px rgba(0, 0, 0, 0.1),
+              inset 0 1px 2px rgba(255, 255, 255, 0.8);
+          "
         >
           <!-- Cap detail -->
-          <div class="absolute top-2 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-zinc-500 rounded-full opacity-30"></div>
+          <div
+            class="absolute top-2 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-zinc-500 rounded-full opacity-30"
+          ></div>
         </div>
 
         <!-- Brand Label with embossed effect -->
         <div
           class="absolute top-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-b from-gray-900 to-black text-cyan-400 text-xs px-3 py-1.5 rounded font-mono tracking-wider"
-          style="box-shadow: 
-            inset 0 1px 2px rgba(0, 0, 0, 0.5),
-            0 1px 1px rgba(255, 255, 255, 0.1)"
+          style="
+            box-shadow:
+              inset 0 1px 2px rgba(0, 0, 0, 0.5),
+              0 1px 1px rgba(255, 255, 255, 0.1);
+          "
         >
           {{ props.sensorId }}
         </div>
@@ -37,27 +45,37 @@
         <!-- Water Level Display Window with glass effect -->
         <div
           class="absolute top-20 left-4 right-4 h-52 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 rounded-lg overflow-hidden"
-          style="box-shadow: 
-            inset 0 4px 8px rgba(0, 0, 0, 0.5),
-            inset 0 -2px 4px rgba(0, 0, 0, 0.3),
-            0 1px 2px rgba(255, 255, 255, 0.1)"
+          style="
+            box-shadow:
+              inset 0 4px 8px rgba(0, 0, 0, 0.5),
+              inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+              0 1px 2px rgba(255, 255, 255, 0.1);
+          "
         >
           <!-- Glass reflection -->
-          <div class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white opacity-5 pointer-events-none"></div>
-          
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white opacity-5 pointer-events-none"
+          ></div>
+
           <!-- Water with realistic gradient -->
           <div
             class="absolute bottom-0 left-0 right-0 transition-all duration-1000 ease-out"
             :style="{ height: internalWaterLevel + '%' }"
           >
             <!-- Multi-layer water effect -->
-            <div class="absolute inset-0 bg-gradient-to-t from-blue-700 via-blue-500 to-cyan-400 opacity-90"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-blue-800 to-transparent opacity-40"></div>
-            
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-blue-700 via-blue-500 to-cyan-400 opacity-90"
+            ></div>
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-blue-800 to-transparent opacity-40"
+            ></div>
+
             <!-- Water Surface Animation with waves -->
             <div class="absolute top-0 left-0 right-0 h-2">
-              <div class="absolute inset-0 bg-gradient-to-b from-cyan-300 to-transparent opacity-60 animate-pulse"></div>
-              <div 
+              <div
+                class="absolute inset-0 bg-gradient-to-b from-cyan-300 to-transparent opacity-60 animate-pulse"
+              ></div>
+              <div
                 class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
                 style="animation: wave 3s linear infinite"
               ></div>
@@ -69,13 +87,19 @@
               :key="bubble.id"
               class="absolute rounded-full"
               :class="bubble.y > 50 ? 'w-1.5 h-1.5' : 'w-1 h-1'"
-              style="background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(100, 200, 255, 0.4))"
+              style="
+                background: radial-gradient(
+                  circle at 30% 30%,
+                  rgba(255, 255, 255, 0.8),
+                  rgba(100, 200, 255, 0.4)
+                );
+              "
               :style="{
                 left: bubble.x + '%',
                 bottom: bubble.y + '%',
                 animationDelay: bubble.delay + 's',
                 animationDuration: bubble.duration + 's',
-                animation: 'float ' + bubble.duration + 's ease-in-out infinite'
+                animation: 'float ' + bubble.duration + 's ease-in-out infinite',
               }"
             ></div>
           </div>
@@ -100,21 +124,38 @@
 
           <!-- Grid overlay for industrial look -->
           <div class="absolute inset-0 opacity-10">
-            <div class="w-full h-full" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 9px, rgba(255,255,255,0.1) 9px, rgba(255,255,255,0.1) 10px)"></div>
+            <div
+              class="w-full h-full"
+              style="
+                background-image: repeating-linear-gradient(
+                  0deg,
+                  transparent,
+                  transparent 9px,
+                  rgba(255, 255, 255, 0.1) 9px,
+                  rgba(255, 255, 255, 0.1) 10px
+                );
+              "
+            ></div>
           </div>
         </div>
 
         <!-- Digital Display with LCD effect -->
         <div
           class="absolute bottom-20 left-4 right-4 h-10 bg-black rounded-md flex items-center justify-center overflow-hidden"
-          style="box-shadow: 
-            inset 0 2px 8px rgba(0, 0, 0, 0.8),
-            0 1px 2px rgba(255, 255, 255, 0.1);
-            background: linear-gradient(to bottom, #0a0a0a, #1a1a1a)"
+          style="
+            box-shadow:
+              inset 0 2px 8px rgba(0, 0, 0, 0.8),
+              0 1px 2px rgba(255, 255, 255, 0.1);
+            background: linear-gradient(to bottom, #0a0a0a, #1a1a1a);
+          "
         >
           <!-- LCD glow effect -->
-          <div class="absolute inset-0 bg-gradient-to-b from-transparent to-green-900 opacity-20"></div>
-          <span class="text-green-400 font-mono text-lg font-bold tracking-wider drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-transparent to-green-900 opacity-20"
+          ></div>
+          <span
+            class="text-green-400 font-mono text-lg font-bold tracking-wider drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]"
+          >
             {{ internalWaterLevel.toFixed(1) }}{{ props.unit }}
           </span>
         </div>
@@ -126,7 +167,7 @@
               class="w-3 h-3 rounded-full border border-gray-700"
               :class="alertStatus === 'high' ? 'bg-red-500' : 'bg-gray-700'"
             ></div>
-            <div 
+            <div
               v-if="alertStatus === 'high'"
               class="absolute inset-0 w-3 h-3 rounded-full bg-red-500 animate-ping opacity-75"
             ></div>
@@ -136,7 +177,7 @@
               class="w-3 h-3 rounded-full border border-gray-700"
               :class="alertStatus === 'normal' ? 'bg-green-500' : 'bg-gray-700'"
             ></div>
-            <div 
+            <div
               v-if="alertStatus === 'normal'"
               class="absolute inset-0 w-3 h-3 rounded-full bg-green-500 animate-pulse opacity-50"
             ></div>
@@ -146,7 +187,7 @@
               class="w-3 h-3 rounded-full border border-gray-700"
               :class="alertStatus === 'low' ? 'bg-yellow-500' : 'bg-gray-700'"
             ></div>
-            <div 
+            <div
               v-if="alertStatus === 'low'"
               class="absolute inset-0 w-3 h-3 rounded-full bg-yellow-500 animate-ping opacity-75"
             ></div>
@@ -165,48 +206,72 @@
             @mousemove="onDrag"
             @mouseup="stopDrag"
             @mouseleave="stopDrag"
-            style="background: radial-gradient(circle at 30% 30%, #e5e7eb, #6b7280);
-                   box-shadow: 
-                     0 4px 6px -1px rgba(0, 0, 0, 0.3),
-                     0 2px 4px -1px rgba(0, 0, 0, 0.06),
-                     inset 0 1px 2px rgba(255, 255, 255, 0.5),
-                     inset 0 -1px 2px rgba(0, 0, 0, 0.3)"
+            style="
+              background: radial-gradient(circle at 30% 30%, #e5e7eb, #6b7280);
+              box-shadow:
+                0 4px 6px -1px rgba(0, 0, 0, 0.3),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                inset 0 1px 2px rgba(255, 255, 255, 0.5),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+            "
           >
             <!-- Knob indicator -->
             <div
               class="absolute top-1 left-1/2 w-0.5 h-3 bg-gray-900 transform-gpu -translate-x-1/2 origin-bottom"
-              :style="{ transform: 'translateX(-50%) rotate(' + (internalWaterLevel * 2.7 - 135) + 'deg)' }"
+              :style="{
+                transform: 'translateX(-50%) rotate(' + (internalWaterLevel * 2.7 - 135) + 'deg)',
+              }"
             ></div>
             <!-- Center detail -->
-            <div class="absolute inset-2 rounded-full bg-gradient-to-br from-gray-400 to-gray-600"></div>
+            <div
+              class="absolute inset-2 rounded-full bg-gradient-to-br from-gray-400 to-gray-600"
+            ></div>
             <!-- Grip dots -->
-            <div class="absolute top-1 left-1/2 w-1 h-1 bg-gray-800 rounded-full transform -translate-x-1/2"></div>
+            <div
+              class="absolute top-1 left-1/2 w-1 h-1 bg-gray-800 rounded-full transform -translate-x-1/2"
+            ></div>
           </div>
         </div>
 
         <!-- Mounting Screws with realistic detail -->
         <div class="absolute top-8 left-2">
           <div class="w-3 h-3 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 relative">
-            <div class="absolute inset-0.5 rounded-full bg-gradient-to-tl from-gray-700 to-gray-500"></div>
-            <div class="absolute top-1/2 left-1/2 w-2 h-0.5 bg-gray-900 transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div
+              class="absolute inset-0.5 rounded-full bg-gradient-to-tl from-gray-700 to-gray-500"
+            ></div>
+            <div
+              class="absolute top-1/2 left-1/2 w-2 h-0.5 bg-gray-900 transform -translate-x-1/2 -translate-y-1/2"
+            ></div>
           </div>
         </div>
         <div class="absolute top-8 right-2">
           <div class="w-3 h-3 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 relative">
-            <div class="absolute inset-0.5 rounded-full bg-gradient-to-tl from-gray-700 to-gray-500"></div>
-            <div class="absolute top-1/2 left-1/2 w-2 h-0.5 bg-gray-900 transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div
+              class="absolute inset-0.5 rounded-full bg-gradient-to-tl from-gray-700 to-gray-500"
+            ></div>
+            <div
+              class="absolute top-1/2 left-1/2 w-2 h-0.5 bg-gray-900 transform -translate-x-1/2 -translate-y-1/2"
+            ></div>
           </div>
         </div>
         <div class="absolute bottom-28 left-2">
           <div class="w-3 h-3 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 relative">
-            <div class="absolute inset-0.5 rounded-full bg-gradient-to-tl from-gray-700 to-gray-500"></div>
-            <div class="absolute top-1/2 left-1/2 w-2 h-0.5 bg-gray-900 transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div
+              class="absolute inset-0.5 rounded-full bg-gradient-to-tl from-gray-700 to-gray-500"
+            ></div>
+            <div
+              class="absolute top-1/2 left-1/2 w-2 h-0.5 bg-gray-900 transform -translate-x-1/2 -translate-y-1/2"
+            ></div>
           </div>
         </div>
         <div class="absolute bottom-28 right-2">
           <div class="w-3 h-3 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 relative">
-            <div class="absolute inset-0.5 rounded-full bg-gradient-to-tl from-gray-700 to-gray-500"></div>
-            <div class="absolute top-1/2 left-1/2 w-2 h-0.5 bg-gray-900 transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div
+              class="absolute inset-0.5 rounded-full bg-gradient-to-tl from-gray-700 to-gray-500"
+            ></div>
+            <div
+              class="absolute top-1/2 left-1/2 w-2 h-0.5 bg-gray-900 transform -translate-x-1/2 -translate-y-1/2"
+            ></div>
           </div>
         </div>
 
@@ -357,13 +422,26 @@ onMounted(() => {
 
 <style>
 @keyframes wave {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes float {
-  0% { transform: translateY(0) scale(1); opacity: 0.6; }
-  50% { transform: translateY(-5px) scale(1.1); opacity: 0.8; }
-  100% { transform: translateY(0) scale(1); opacity: 0.6; }
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-5px) scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
 }
 </style>

@@ -141,6 +141,7 @@ const handleModalSave = (name: string, description?: string) => {
   if (canvasRef.value) {
     const success = canvasRef.value.saveConfiguration(name, description)
     if (success) {
+      console.log(success, 'success')
       alert(`Cấu hình "${name}" đã được lưu thành công!`)
       handleModalClose()
     } else {

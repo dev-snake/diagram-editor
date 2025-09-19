@@ -38,12 +38,12 @@
           zIndex: component.groupId ? 15 : 10,
         }"
         :class="{
-          'ring-2 ring-blue-400 ring-opacity-50':
+          'selected-component-resizing':
             isResizing && selectedComponent?.component_id === component.component_id,
-          'ring-2 ring-green-400 ring-opacity-50': selectedComponents.some(
+          'selected-component': selectedComponents.some(
             (c) => c.component_id === component.component_id,
           ),
-          'ring-2 ring-purple-400 ring-opacity-30':
+          'selected-group-component':
             component.groupId && selectedComponent?.groupId === component.groupId,
         }"
         class="select-none"
@@ -63,49 +63,50 @@
         <!-- Resize handles for selected component (only if not in group) -->
         <div
           v-if="selectedComponent?.component_id === component.component_id && !component.groupId"
-          class="absolute inset-0 pointer-events-none"
+          class="absolute pointer-events-none"
+          style="top: -60px; left: -60px; right: -60px; bottom: -60px"
         >
           <!-- Corner handles -->
           <div
-            class="absolute w-2 h-2 bg-blue-500 border border-white pointer-events-auto cursor-nw-resize"
-            style="left: -4px; top: -4px"
+            class="absolute w-3 h-3 bg-green-500 border-2 border-white rounded-sm pointer-events-auto cursor-nw-resize shadow-md"
+            style="left: -6px; top: -6px"
             @mousedown="startResize($event, component, 'nw')"
           ></div>
           <div
-            class="absolute w-2 h-2 bg-blue-500 border border-white pointer-events-auto cursor-ne-resize"
-            style="right: -4px; top: -4px"
+            class="absolute w-3 h-3 bg-green-500 border-2 border-white rounded-sm pointer-events-auto cursor-ne-resize shadow-md"
+            style="right: -6px; top: -6px"
             @mousedown="startResize($event, component, 'ne')"
           ></div>
           <div
-            class="absolute w-2 h-2 bg-blue-500 border border-white pointer-events-auto cursor-se-resize"
-            style="right: -4px; bottom: -4px"
+            class="absolute w-3 h-3 bg-green-500 border-2 border-white rounded-sm pointer-events-auto cursor-se-resize shadow-md"
+            style="right: -6px; bottom: -6px"
             @mousedown="startResize($event, component, 'se')"
           ></div>
           <div
-            class="absolute w-2 h-2 bg-blue-500 border border-white pointer-events-auto cursor-sw-resize"
-            style="left: -4px; bottom: -4px"
+            class="absolute w-3 h-3 bg-green-500 border-2 border-white rounded-sm pointer-events-auto cursor-sw-resize shadow-md"
+            style="left: -6px; bottom: -6px"
             @mousedown="startResize($event, component, 'sw')"
           ></div>
 
           <!-- Edge handles -->
           <div
-            class="absolute w-2 h-2 bg-blue-500 border border-white pointer-events-auto cursor-n-resize"
-            style="left: 50%; top: -4px; transform: translateX(-50%)"
+            class="absolute w-3 h-3 bg-green-500 border-2 border-white rounded-sm pointer-events-auto cursor-n-resize shadow-md"
+            style="left: 50%; top: -6px; transform: translateX(-50%)"
             @mousedown="startResize($event, component, 'n')"
           ></div>
           <div
-            class="absolute w-2 h-2 bg-blue-500 border border-white pointer-events-auto cursor-e-resize"
-            style="right: -4px; top: 50%; transform: translateY(-50%)"
+            class="absolute w-3 h-3 bg-green-500 border-2 border-white rounded-sm pointer-events-auto cursor-e-resize shadow-md"
+            style="right: -6px; top: 50%; transform: translateY(-50%)"
             @mousedown="startResize($event, component, 'e')"
           ></div>
           <div
-            class="absolute w-2 h-2 bg-blue-500 border border-white pointer-events-auto cursor-s-resize"
-            style="left: 50%; bottom: -4px; transform: translateX(-50%)"
+            class="absolute w-3 h-3 bg-green-500 border-2 border-white rounded-sm pointer-events-auto cursor-s-resize shadow-md"
+            style="left: 50%; bottom: -6px; transform: translateX(-50%)"
             @mousedown="startResize($event, component, 's')"
           ></div>
           <div
-            class="absolute w-2 h-2 bg-blue-500 border border-white pointer-events-auto cursor-w-resize"
-            style="left: -4px; top: 50%; transform: translateY(-50%)"
+            class="absolute w-3 h-3 bg-green-500 border-2 border-white rounded-sm pointer-events-auto cursor-w-resize shadow-md"
+            style="left: -6px; top: 50%; transform: translateY(-50%)"
             @mousedown="startResize($event, component, 'w')"
           ></div>
 
@@ -136,7 +137,7 @@
     <!-- Selection Box -->
     <div
       v-if="selectionBox.visible"
-      class="absolute border-2 border-blue-400 bg-blue-100 bg-opacity-20 pointer-events-none"
+      class="absolute border-2 border-green-400 border-dashed bg-opacity-20 pointer-events-none"
       :style="{
         left: Math.min(selectionBox.startX, selectionBox.endX) + 'px',
         top: Math.min(selectionBox.startY, selectionBox.endY) + 'px',
@@ -1535,10 +1536,7 @@ const selectAllComponents = () => {
     selectedComponent.value = null
     selectedGroup.value = null
 
-    // Auto-group if there are selected components
-    if (canGroupSelectedComponents.value) {
-      createGroup()
-    }
+    // Don't auto-group, let user manually group via menu or Ctrl+G
   }
 }
 
@@ -1716,5 +1714,58 @@ defineExpose({
 
 .canvas-container:active {
   cursor: grabbing;
+}
+
+/* Custom selection borders with dashed style and expanded spacing */
+.selected-component {
+  position: relative;
+}
+
+.selected-component::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: -60px;
+  right: -60px;
+  bottom: -60px;
+  border: 2px dashed #10b981;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.selected-component-resizing {
+  position: relative;
+}
+
+.selected-component-resizing::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: -60px;
+  right: -60px;
+  bottom: -60px;
+  border: 2px dashed #3b82f6;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.selected-group-component {
+  position: relative;
+}
+
+.selected-group-component::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: -60px;
+  right: -60px;
+  bottom: -60px;
+  border: 2px dashed #a855f7;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.7;
 }
 </style>
