@@ -246,11 +246,12 @@ const handleSelect = (data: any) => {
           data,
         }
       }
-      console.log(canvasState)
+      // console.log(canvasState)
       break
     default:
       break
   }
+  emit('close')
 }
 watch(
   () => props.isVisible,
