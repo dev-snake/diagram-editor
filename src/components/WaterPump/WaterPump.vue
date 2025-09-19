@@ -142,6 +142,7 @@ interface Props {
   powerConsumption?: number
   enableControl?: boolean
   statusText?: string
+  componentId?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -153,6 +154,7 @@ const props = withDefaults(defineProps<Props>(), {
   powerConsumption: 0,
   enableControl: true,
   statusText: '',
+  componentId: undefined,
 })
 
 const emit = defineEmits<{

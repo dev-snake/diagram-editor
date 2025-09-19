@@ -313,6 +313,7 @@ interface Props {
     low: number
     high: number
   }
+  componentId?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -326,6 +327,7 @@ const props = withDefaults(defineProps<Props>(), {
   enableControl: true,
   showBubbles: true,
   alertThresholds: () => ({ low: 20, high: 80 }),
+  componentId: undefined,
 })
 
 const emit = defineEmits<{

@@ -5,21 +5,57 @@
     :style="{ width: width + 'px', height: height + 'px' }"
     @click="$emit('click')"
   >
-    <WaterTank v-if="type === 'watertank'" :width="width" :height="height" />
-    <WaterPump v-else-if="type === 'waterpumb'" :width="width" :height="height" />
-    <GateWave v-else-if="type === 'gatewave'" :width="width" :height="height" />
-    <PressureGauge v-else-if="type === 'pressure-gauge'" :width="width" :height="height" />
-    <WaterLevelSensor v-else-if="type === 'water-level-sensor'" :width="width" :height="height" />
-    <Device v-else-if="type === 'device'" :width="width" :height="height" />
+    <WaterTank
+      v-if="type === 'watertank'"
+      :width="width"
+      :height="height"
+      :component-id="componentId"
+    />
+    <WaterPump
+      v-else-if="type === 'waterpumb'"
+      :width="width"
+      :height="height"
+      :component-id="componentId"
+    />
+    <GateWave
+      v-else-if="type === 'gatewave'"
+      :width="width"
+      :height="height"
+      :component-id="componentId"
+    />
+    <PressureGauge
+      v-else-if="type === 'pressure-gauge'"
+      :width="width"
+      :height="height"
+      :component-id="componentId"
+    />
+    <WaterLevelSensor
+      v-else-if="type === 'water-level-sensor'"
+      :width="width"
+      :height="height"
+      :component-id="componentId"
+    />
+    <Device
+      v-else-if="type === 'device'"
+      :width="width"
+      :height="height"
+      :component-id="componentId"
+    />
     <WaterPipe
       v-else-if="type === 'water-pipe'"
       :direction="direction"
       :width="width"
       :height="height"
+      :component-id="componentId"
     />
     <SimplePipe v-else-if="type === 'pipe'" :width="width" :height="height" />
     <GridSquare v-else-if="type === 'grid-square'" :width="width" :height="height" />
-    <Pressuremeter v-else-if="type === 'pressure-meter'" :width="width" :height="height" />
+    <Pressuremeter
+      v-else-if="type === 'pressure-meter'"
+      :width="width"
+      :height="height"
+      :component-id="componentId"
+    />
 
     <div
       v-else
@@ -55,6 +91,8 @@ interface Props {
   height: number
   selected?: boolean
   direction?: 'left' | 'right'
+  componentId?: number
+  componentData?: any
 }
 
 const props = defineProps<Props>()

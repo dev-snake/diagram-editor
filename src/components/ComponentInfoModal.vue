@@ -28,18 +28,63 @@
       </div>
 
       <!-- Content -->
-      <div class="px-6 py-4 flex-1 overflow-y-auto">
-        <!-- Component Properties -->
-        <div class="space-y-4" v-if="componentData">
-          <!-- items  -->
-          <!--  -->
+      <div ref="scrollContainer" class="px-6 py-4 flex-1 overflow-y-auto" @scroll="handleScroll">
+        <div class="space-y-6" v-if="componentData">
+          <!-- Device Type -->
           <template v-if="componentData.type === 'device'">
             <div>
-              <div v-for="(i, key) in items" :key="i.id">
-                {{ i.displayName }}
+              <h3 class="text-lg font-semibold text-blue-700 mb-3">Danh sách thiết bị</h3>
+              <ul class="divide-y divide-gray-100">
+                <li v-for="i in items" :key="i.id" class="py-3 flex items-center justify-between">
+                  <span class="font-medium text-gray-800">{{ i.displayName }}</span>
+                </li>
+              </ul>
+            </div>
+          </template>
+
+          <!-- Pressure Meter Type -->
+          <template v-else-if="componentData.type === 'pressure-meter'">
+            <div>
+              <div
+                v-for="i in items"
+                :key="i.id"
+                class="border border-gray-200 rounded-lg p-4 mb-4 hover:cursor-pointer"
+                @click="handleSelect(i.vgaData)"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-medium text-gray-800">{{ i.displayName }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm text-gray-700">
+                  <div>
+                    <span class="font-semibold">Q_TONG:</span>
+                    <span>{{ i.vgaData.Q_TONG ?? '-' }}</span>
+                  </div>
+                  <div>
+                    <span class="font-semibold">Áp suất trước van:</span>
+                    <span>{{ i.vgaData.pressureBeforeValve ?? '-' }}</span>
+                  </div>
+                  <div>
+                    <span class="font-semibold">Áp suất sau van :</span>
+                    <span>{{ i.vgaData.pressureAfterValve ?? '-' }}</span>
+                  </div>
+                  <div>
+                    <span class="font-semibold">Lưu lượng nước:</span>
+                    <span>{{ i.vgaData.waterflow ?? '-' }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
+        </div>
+
+        <!-- Loading indicator -->
+        <div v-if="isLoading && items.length > 0" class="flex justify-center py-4">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        </div>
+
+        <!-- No more data indicator -->
+        <div v-if="!hasMore && items.length > 0" class="text-center py-4 text-gray-500 text-sm">
+          Đã tải hết dữ liệu
         </div>
       </div>
 
@@ -60,9 +105,10 @@
 </template>
 
 <script setup lang="ts">
-
 import type { ComponentData, ComponentKey } from '@/types/component'
+import { useApi } from '@/utils/useApi'
 import { computed, onMounted, watch, inject, ref } from 'vue'
+import type { ICanvasState } from './Canvas.vue'
 
 interface Props {
   isVisible: boolean
@@ -75,11 +121,33 @@ const props = withDefaults(defineProps<Props>(), {
   componentData: null,
   deviceData: null,
 })
-const canvasState = inject<CanvasState>('canvasState')
+const canvasState = inject<ICanvasState>('canvasState')
+console.log('[provide]', canvasState)
 const items = ref<any[]>([])
 const emit = defineEmits<{
   close: []
 }>()
+
+// Pagination state
+const currentPage = ref(1)
+const totalPages = ref(1)
+const isLoading = ref(false)
+const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// Scroll handling
+const scrollContainer = ref<HTMLElement>()
+
+const handleScroll = (event: Event) => {
+  const target = event.target as HTMLElement
+  const { scrollTop, scrollHeight, clientHeight } = target
+
+  // Check if scrolled to bottom (with a small threshold)
+  const isNearBottom = scrollTop + clientHeight >= scrollHeight - 10
+
+  if (isNearBottom && hasMore.value && !isLoading.value) {
+    loadMoreData()
+  }
+}
 
 const componentTypeMap: Record<ComponentKey, string> = {
   watertank: 'Bể chứa nước',
@@ -111,54 +179,98 @@ const handleBackdropClick = (event: MouseEvent) => {
     emit('close')
   }
 }
-// Map type -> endpoint
-const baseURL = 'http://localhost:8998/v1'
-const apiMap: Record<ComponentKey, string> = {
-  watertank: `${baseURL}/device?keyword&type=DATALOGGER&sort=DESC&perPage=10&page=1&roleId`,
-  waterpumb: 'https://api.example.com/waterpumb',
-  gatewave: 'https://api.example.com/gatewave',
-  'pressure-gauge': 'https://api.example.com/pressure-gauge',
-  'water-level-sensor': 'https://api.example.com/water-level-sensor',
-  device: `${baseURL}/device?type=DMA&sort=DESC&perPage=10&page=1&roleId`,
-  'water-pipe': 'https://api.example.com/water-pipe',
-  pipe: 'https://api.example.com/pipe',
-  'grid-square': 'https://api.example.com/grid-square',
-  'pressure-meter': 'https://api.example.com/grid-square',
-}
+const { request } = useApi()
 
-const fetchData = async (type: ComponentKey) => {
-  const url = apiMap[type]
-  if (!url) return (console.warn(`❌ No endpoint for type: ${type}`), null)
+const loadData = async (type: ComponentKey, resetData = true) => {
+  if (isLoading.value) return
 
-  const token = document.cookie.match(/(^| )accessToken=([^;]+)/)?.[2]
+  isLoading.value = true
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${decodeURIComponent(token)}` }),
-      },
+    const response = await request.get(`${type}`, {
+      page: currentPage.value,
+      perPage: 10,
+      sort: 'DESC',
+      keyword: '',
+      type: 'VGA',
+      roleId: '',
     })
-    return res.ok ? res.json() : null
-  } catch (e) {
-    console.error('❌ Fetch error:', e)
-    return null
+
+    // Update pagination info
+    totalPages.value = response.meta.totalPage || 1
+
+    if (resetData) {
+      items.value = response.data || []
+    } else {
+      items.value = [...items.value, ...(response.data || [])]
+    }
+
+    console.log('Loaded data:', response.data)
+    return response
+  } catch (error) {
+    console.error('Error loading data:', error)
+  } finally {
+    isLoading.value = false
   }
 }
 
-const loadData = (type: ComponentKey) => fetchData(type)
+const loadMoreData = async () => {
+  if (!hasMore.value || isLoading.value) return
 
+  currentPage.value += 1
+  const type = props.componentData?.type as ComponentKey
+  if (componentTypeMap[type]) {
+    await loadData(type, false) // false means append to existing data
+  }
+}
+const handleSelect = (data: any) => {
+  console.log(data)
+  if (!canvasState) return
+  switch (props.componentData?.type as ComponentKey) {
+    case 'watertank':
+    case 'waterpumb':
+    case 'gatewave':
+    case 'pressure-gauge':
+    case 'water-level-sensor':
+    case 'device':
+    case 'water-pipe':
+    case 'pipe':
+    case 'grid-square':
+    case 'pressure-meter':
+      const idx = canvasState?.components.findIndex(
+        (c) => c.component_id === props.componentData?.component_id,
+      )
+      if (idx !== -1) {
+        canvasState.components[idx] = {
+          ...canvasState.components[idx],
+          data,
+        }
+      }
+      console.log(canvasState)
+      break
+    default:
+      break
+  }
+}
 watch(
   () => props.isVisible,
   async () => {
-    const type = props.componentData?.type as ComponentKey
-    if (!componentTypeMap[type]) return
-    const data = await loadData(type)
-    console.log(data)
+    if (props.isVisible) {
+      const type = props.componentData?.type as ComponentKey
+      if (!componentTypeMap[type]) return
+
+      // Reset pagination when modal opens
+      currentPage.value = 1
+      totalPages.value = 1
+      items.value = []
+
+      await loadData(type, true) // true means reset data
+    }
   },
 )
-
-onMounted(() => {})
+onMounted(() => {
+  console.log(props, 'props in modal')
+})
 </script>
 
 <style scoped>

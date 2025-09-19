@@ -127,6 +127,7 @@ interface DeviceData {
   alarmActive: boolean
   motorRunning: boolean
   pumpActive: boolean
+  componentId?: number
 }
 
 interface Props {
@@ -139,6 +140,7 @@ interface Props {
   data?: Partial<DeviceData>
   enableSimulation?: boolean
   updateInterval?: number
+  componentId?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -150,6 +152,7 @@ const props = withDefaults(defineProps<Props>(), {
   data: () => ({}),
   enableSimulation: true,
   updateInterval: 2000,
+  componentId: undefined,
 })
 
 const emit = defineEmits<{

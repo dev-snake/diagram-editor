@@ -57,6 +57,8 @@
           :height="component.height"
           :selected="selectedComponent?.component_id === component.component_id"
           :direction="component.direction"
+          :component-id="component.component_id"
+          :component-data="component.data"
           @click="selectComponent(component)"
         />
 
@@ -223,17 +225,22 @@ const selectedGroup = ref<ComponentGroup | null>(null)
 const selectedGroupIds = ref<number[]>([]) // For multiple group selection
 const isDraggingComponent = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
-
+export interface ICanvasState {
+  components: DroppedComponent[]
+  groups: ComponentGroup[]
+  selectedComponents: DroppedComponent[]
+  selectedComponent: DroppedComponent | null
+  selectedGroup: ComponentGroup | null
+  selectedGroupIds: number[]
+}
 // Create reactive state object for provide
-const canvasState = reactive({
+const canvasState = reactive<ICanvasState>({
   components: components.value,
   groups: groups.value,
   selectedComponents: selectedComponents.value,
   selectedComponent: selectedComponent.value,
   selectedGroup: selectedGroup.value,
   selectedGroupIds: selectedGroupIds.value,
-  isDraggingComponent: isDraggingComponent.value,
-  dragOffset: dragOffset.value,
 })
 
 // Provide the canvas state to child components
@@ -284,18 +291,6 @@ watch(
   selectedGroupIds,
   (newVal) => {
     canvasState.selectedGroupIds = newVal
-  },
-  { deep: true },
-)
-
-watch(isDraggingComponent, (newVal) => {
-  canvasState.isDraggingComponent = newVal
-})
-
-watch(
-  dragOffset,
-  (newVal) => {
-    canvasState.dragOffset = newVal
   },
   { deep: true },
 )

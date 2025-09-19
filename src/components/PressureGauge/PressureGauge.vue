@@ -218,7 +218,7 @@
             <!-- Digital Display with LCD effect -->
             <div class="absolute bottom-1/5 left-1/2 transform -translate-x-1/2">
               <div
-                class="px-3  py-1 rounded"
+                class="px-3 py-1 rounded"
                 style="
                   background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
                   box-shadow:
@@ -306,6 +306,7 @@ interface Props {
   enableControl?: boolean
   dangerZone?: number
   alertThreshold?: number
+  componentId?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -319,6 +320,7 @@ const props = withDefaults(defineProps<Props>(), {
   enableControl: true,
   dangerZone: 80,
   alertThreshold: 90,
+  componentId: undefined,
 })
 
 const emit = defineEmits<{

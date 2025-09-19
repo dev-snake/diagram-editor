@@ -12,8 +12,8 @@ const apiMap: Record<string, string> = {
   'water-pipe': 'https://api.example.com/water-pipe',
   pipe: 'https://api.example.com/pipe',
   'grid-square': 'https://api.example.com/grid-square',
-  'pressure-meter': 'https://api.example.com/grid-square',
-  create : `${baseURL}/scada`,
+  'pressure-meter': `${baseURL}/device`,
+  create: `${baseURL}/scada`,
 }
 
 export function useApi() {
@@ -27,7 +27,7 @@ export function useApi() {
     options: {
       body?: unknown
       params?: Record<string, string | number>
-    } = {}
+    } = {},
   ) => {
     let url = apiMap[type]
     if (!url) {
@@ -36,9 +36,7 @@ export function useApi() {
     }
 
     if (options.params) {
-      const query = new URLSearchParams(
-        options.params as Record<string, string>
-      ).toString()
+      const query = new URLSearchParams(options.params as Record<string, string>).toString()
       url += (url.includes('?') ? '&' : '?') + query
     }
 
@@ -51,7 +49,7 @@ export function useApi() {
           'Content-Type': 'application/json',
           ...(token && { Authorization: `Bearer ${decodeURIComponent(token)}` }),
         },
-        ...(typeof options.body !== "undefined" ? { body: JSON.stringify(options.body) } : {}),
+        ...(typeof options.body !== 'undefined' ? { body: JSON.stringify(options.body) } : {}),
       })
 
       if (!res.ok) {
@@ -69,14 +67,10 @@ export function useApi() {
   const request = {
     get: (type: string, params?: Record<string, string | number>) =>
       baseRequest(type, 'GET', { params }),
-    post: (type: string, body?: unknown) =>
-      baseRequest(type, 'POST', { body }),
-    put: (type: string, body?: unknown) =>
-      baseRequest(type, 'PUT', { body }),
-    patch: (type: string, body?: unknown) =>
-      baseRequest(type, 'PATCH', { body }),
-    delete: (type: string) =>
-      baseRequest(type, 'DELETE'),
+    post: (type: string, body?: unknown) => baseRequest(type, 'POST', { body }),
+    put: (type: string, body?: unknown) => baseRequest(type, 'PUT', { body }),
+    patch: (type: string, body?: unknown) => baseRequest(type, 'PATCH', { body }),
+    delete: (type: string) => baseRequest(type, 'DELETE'),
   }
 
   return { request }

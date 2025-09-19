@@ -105,6 +105,7 @@ interface Props {
   pressure?: number
   maxPressure?: number
   enableControl?: boolean
+  componentId?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -116,6 +117,7 @@ const props = withDefaults(defineProps<Props>(), {
   pressure: 0,
   maxPressure: 200,
   enableControl: true,
+  componentId: undefined,
 })
 
 const emit = defineEmits<{

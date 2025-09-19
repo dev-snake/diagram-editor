@@ -65,7 +65,12 @@
                       text-anchor="middle"
                       class="text-xs font-bold fill-gray-900"
                     >
-                      {{ Math.round(minPressure + ((i - 1) / 10) * (maxPressure - minPressure)) }}
+                      {{
+                        Math.round(
+                          props.minPressure +
+                            ((i - 1) / 10) * (props.maxPressure - props.minPressure),
+                        )
+                      }}
                     </text>
                   </g>
 
@@ -232,7 +237,12 @@
                       text-anchor="middle"
                       class="text-xs font-bold fill-gray-900"
                     >
-                      {{ Math.round(minPressure + ((i - 1) / 10) * (maxPressure - minPressure)) }}
+                      {{
+                        Math.round(
+                          props.minPressure +
+                            ((i - 1) / 10) * (props.maxPressure - props.minPressure),
+                        )
+                      }}
                     </text>
                   </g>
 
@@ -325,7 +335,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, inject } from 'vue'
+import type { ICanvasState } from '../Canvas.vue'
 
 interface Props {
   width?: number
@@ -338,6 +349,7 @@ interface Props {
   meterTitle?: string
   meterId?: string
   enableSimulation?: boolean
+  componentId?: number // Thêm prop để nhận component ID
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -345,12 +357,13 @@ const props = withDefaults(defineProps<Props>(), {
   height: 400,
   inputPressureValue: 0,
   outputPressureValue: 0,
-  maxPressure: 100,
+  maxPressure: 10,
   minPressure: 0,
   unit: 'BAR',
   meterTitle: 'PM-01',
   meterId: 'PRESSURE-METER-01',
   enableSimulation: true,
+  componentId: undefined, // Default undefined
 })
 
 const emit = defineEmits<{
@@ -359,6 +372,18 @@ const emit = defineEmits<{
   pressureChange: [input: number, output: number, difference: number]
   alert: [type: 'normal' | 'warning' | 'critical', message: string]
 }>()
+const canvasState = inject<ICanvasState>('canvasState')
+console.log('component_id', props.componentId)
+// Tìm component data dựa trên componentId
+const currentComponent = computed(() => {
+  if (!props.componentId || !canvasState) return null
+  return canvasState.components.find((c) => c.component_id === props.componentId)
+})
+
+// Lấy dữ liệu VGA của component hiện tại
+const componentVgaData = computed(() => {
+  return currentComponent.value?.data || null
+})
 
 // Reactive data
 const inputPressure = ref(props.inputPressureValue)
@@ -435,50 +460,32 @@ watch(flowStatus, (newStatus) => {
 
 // Initialize simulation
 onMounted(() => {
-  if (props.enableSimulation) {
-    // Khởi tạo với giá trị ngẫu nhiên
-    const initialInput = Math.random() * (props.maxPressure * 0.6) + props.maxPressure * 0.2
-    const initialOutput = initialInput * (0.8 + Math.random() * 0.15) // Output thường thấp hơn input một chút
+  // Nếu có dữ liệu VGA từ API, sử dụng nó
+  if (componentVgaData.value) {
+    console.log('[PressureMeter] Using VGA data:', componentVgaData.value)
+    const vgaData = componentVgaData.value
 
-    updatePressures(initialInput, initialOutput)
+    // Cập nhật pressure từ VGA data
+    const inputPressureFromAPI = vgaData.pressureBeforeValve || 0
+    const outputPressureFromAPI = vgaData.pressureAfterValve || 0
 
-    // Simulation với dao động thực tế
-    setInterval(() => {
-      // Dao động nhỏ cho áp suất vào
-      const inputFluctuation = (Math.random() - 0.5) * 2
-      const newInput = Math.max(
-        props.minPressure,
-        Math.min(props.maxPressure, inputPressure.value + inputFluctuation),
-      )
-
-      // Áp suất ra phụ thuộc vào áp suất vào với một chút độ trễ
-      const outputRatio = 0.85 + (Math.random() - 0.5) * 0.1
-      const newOutput = Math.max(
-        props.minPressure,
-        Math.min(props.maxPressure, newInput * outputRatio),
-      )
-
-      updatePressures(newInput, newOutput)
-    }, 3000)
-
-    // Dao động lớn hơn thỉnh thoảng
-    setInterval(() => {
-      const inputChange = (Math.random() - 0.5) * 8
-      const newInput = Math.max(
-        props.minPressure,
-        Math.min(props.maxPressure, inputPressure.value + inputChange),
-      )
-
-      const outputRatio = 0.8 + (Math.random() - 0.5) * 0.2
-      const newOutput = Math.max(
-        props.minPressure,
-        Math.min(props.maxPressure, newInput * outputRatio),
-      )
-
-      updatePressures(newInput, newOutput)
-    }, 10000)
+    updatePressures(inputPressureFromAPI, outputPressureFromAPI)
   }
 })
+
+// Watch for VGA data changes
+watch(
+  componentVgaData,
+  (newVgaData) => {
+    if (newVgaData) {
+      const inputPressureFromAPI = newVgaData.pressureBeforeValve || 0
+      const outputPressureFromAPI = newVgaData.pressureAfterValve || 0
+
+      updatePressures(inputPressureFromAPI, outputPressureFromAPI)
+    }
+  },
+  { deep: true },
+)
 </script>
 
 <style scoped>

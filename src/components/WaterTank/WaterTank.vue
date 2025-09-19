@@ -284,6 +284,7 @@ interface Props {
   capacity?: number
   enableAnimation?: boolean
   showBubbles?: boolean
+  componentId?: number
 }
 
 // Props with TypeScript
@@ -295,6 +296,7 @@ const props = withDefaults(defineProps<Props>(), {
   capacity: 1000,
   enableAnimation: true,
   showBubbles: true,
+  componentId: undefined,
 })
 
 const bubbles = ref<Bubble[]>([])
